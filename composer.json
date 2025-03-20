@@ -1,0 +1,11 @@
+{
+    "require": {
+        "web3p/web3.php": "^0.3.2",
+        "vlucas/phpdotenv": "^5.6",
+        "simplito/elliptic-php": "^1.0",
+        "kornrunner/keccak": "^1.0",
+        "kornrunner/rlp": "^0.3.6",
+        "kornrunner/ethereum-offline-raw-tx": "^0.8.0",
+        "phpseclib/phpseclib": "^2.0"
+    }
+}
