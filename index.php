@@ -94,13 +94,14 @@ function sendTransaction($functionData) {
         }
 
         $nonceHex = '0x' . dechex((int) $nonce->toString());
-
-        //Verificar formato da função DATA
+        
+        //Verificar formato de functionData
         if (!is_string($functionData) || substr($functionData, 0, 2) !== '0x') {
             error_log("Erro: functionData inválido. Deve ser uma string hexadecimal começando com 0x.");
             echo json_encode(['error' => "functionData inválido. Deve ser uma string hexadecimal começando com 0x."]);
             return;
         }
+    
 
         //Estimando gás
         $params = [
@@ -161,13 +162,21 @@ function sendTransaction($functionData) {
 
                 error_log("Gas Price final: " . hexdec($transaction['gasPrice']) . " wei");
                 error_log("Gas Limit final: " . hexdec($transaction['gas']) . " unidades");
+                
+                
+                $gasLimit = hexdec($transaction['gas']);  // Convertendo gasLimit de hexadecimal para decimal
+                $gasPrice = hexdec($transaction['gasPrice']);  // Convertendo gasPrice de hexadecimal para decimal
+                $value = hexdec($transaction['value']);  // Valor transferido na transação
+                $totalCost = $gasLimit * $gasPrice + $value; // Calcula custo total em wei
+                
+                error_log("Cálculo do custo total: Gas Limit ($gasLimit) * Gas Price ($gasPrice) + Value ($value) = $totalCost wei");
 
-                // ✅ Assinando a transação
+                //Assinando a transação
                 $signedTransaction = signTransaction($transaction, $privateKey);
 
                 error_log("Transação assinada: " . $signedTransaction);
 
-                // 🚀 Enviando a transação assinada
+                //Enviando a transação assinada
                 $web3->eth->sendRawTransaction($signedTransaction, function ($err, $txHash) {
                     if ($err !== null) {
                         error_log("Erro ao enviar transação: " . $err->getMessage());
@@ -182,6 +191,7 @@ function sendTransaction($functionData) {
     });
 }
 
+$action = $_POST['action'] ?? $_GET['action'] ?? null;
 
 // Registrar um novo circuito
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit') {
@@ -234,6 +244,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit
             (bool) $recurring,
             (string) $data['path']
         );
+
+        var_dump($functionData);
+        error_log("functionData recebido: " . print_r($functionData));
 
         if (!is_string($functionData) || substr($functionData, 0, 2) !== '0x') {
             $functionData = "0x" . $functionData;
