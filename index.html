@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitação de Circuito</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+    <h2>Solicitar Circuito</h2>
+    <form id="contractForm">
+        <label>Origem:</label>
+        <input type="text" id="source" required><br><br>
+
+        <label>Destino:</label>
+        <input type="text" id="destination" required><br><br>
+
+        <label>Largura de Banda:</label>
+        <input type="number" id="bandwidth" required><br><br>
+
+        <label>Política IDs (separados por vírgula):</label>
+        <input type="text" id="policyIds" required><br><br>
+
+        <label>Nome das Políticas (separados por vírgula):</label>
+        <input type="text" id="policyNames" required><br><br>
+
+        <label>Descrições das Políticas (separadas por vírgula):</label>
+        <input type="text" id="policyDescriptions" required><br><br>
+
+        <label>Início:</label>
+        <input type="datetime-local" id="startTime" required><br><br>
+
+        <label>Fim:</label>
+        <input type="datetime-local" id="endTime" required><br><br>
+
+        <label>Recorrente:</label>
+        <select id="recurring">
+            <option value="false">Não</option>
+            <option value="true">Sim</option>
+        </select><br><br>
+
+        <label>Caminho:</label>
+        <input type="text" id="path" required><br><br>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <h3>Resposta da API:</h3>
+    <pre id="response"></pre>
+
+    <script>
+        $("#contractForm").submit(function(event) {
+            event.preventDefault();
+
+            let requestData = {
+                source: $("#source").val(),
+                destination: $("#destination").val(),
+                bandwidth: parseInt($("#bandwidth").val()),
+                policyIds: $("#policyIds").val().split(","),
+                policyNames: $("#policyNames").val().split(","),
+                policyDescriptions: $("#policyDescriptions").val().split(","),
+                startTime: new Date($("#startTime").val()).getTime() / 1000,
+                endTime: new Date($("#endTime").val()).getTime() / 1000,
+                recurring: $("#recurring").val() === "true",
+                path: $("#path").val()
+            };
+
+            $.ajax({
+                url: "api.php",
+                type: "POST",
+                data: JSON.stringify(requestData),
+                contentType: "application/json",
+                success: function(response) {
+                    $("#response").text(JSON.stringify(response, null, 2));
+                },
+                error: function(xhr) {
+                    $("#response").text("Erro ao enviar: " + xhr.responseText);
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
