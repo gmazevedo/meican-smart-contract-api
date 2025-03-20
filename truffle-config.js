@@ -68,6 +68,11 @@ module.exports = {
         host: "127.0.0.1",     // Localhost (default: none)
         port: 8545,            // Standard Ethereum port (default: none)
         network_id: "*",       // Any network (default: none)
+        gas: 1000000000, //Define um limite de gás absurdamente alto
+        gasPrice: 1000000000, // 1 Gwei (ajustável)
+        maxFeePerGas: 1000000000, // Ajuste maior que baseFeePerGas
+        maxPriorityFeePerGas: 500000000, // Fee prioritária
+        allowUnlimitedContractSize: true //Remove restrição no tamanho dos contratos
       },
     //
     // An additional network, but with some advanced options…
