@@ -162,12 +162,12 @@ function sendTransaction($functionData) {
                 error_log("Gas Price final: " . hexdec($transaction['gasPrice']) . " wei");
                 error_log("Gas Limit final: " . hexdec($transaction['gas']) . " unidades");
 
-                // ✅ Assinando a transação
+                //Assinando a transação
                 $signedTransaction = signTransaction($transaction, $privateKey);
 
                 error_log("Transação assinada: " . $signedTransaction);
 
-                // 🚀 Enviando a transação assinada
+                //Enviando a transação assinada
                 $web3->eth->sendRawTransaction($signedTransaction, function ($err, $txHash) {
                     if ($err !== null) {
                         error_log("Erro ao enviar transação: " . $err->getMessage());
