@@ -19,15 +19,6 @@
         <label>Largura de Banda:</label>
         <input type="number" id="bandwidth" required><br><br>
 
-        <label>Política IDs (separados por vírgula):</label>
-        <input type="text" id="policyIds" required><br><br>
-
-        <label>Nome das Políticas (separados por vírgula):</label>
-        <input type="text" id="policyNames" required><br><br>
-
-        <label>Descrições das Políticas (separadas por vírgula):</label>
-        <input type="text" id="policyDescriptions" required><br><br>
-
         <label>Início:</label>
         <input type="datetime-local" id="startTime" required><br><br>
 
@@ -57,9 +48,6 @@
                 source: $("#source").val(),
                 destination: $("#destination").val(),
                 bandwidth: parseInt($("#bandwidth").val()),
-                policyIds: $("#policyIds").val().split(","),
-                policyNames: $("#policyNames").val().split(","),
-                policyDescriptions: $("#policyDescriptions").val().split(","),
                 startTime: new Date($("#startTime").val()).getTime() / 1000,
                 endTime: new Date($("#endTime").val()).getTime() / 1000,
                 recurring: $("#recurring").val() === "true",
@@ -67,7 +55,7 @@
             };
 
             $.ajax({
-                url: "api.php",
+                url: "routes.php",
                 type: "POST",
                 data: JSON.stringify(requestData),
                 contentType: "application/json",

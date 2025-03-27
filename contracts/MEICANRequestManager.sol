@@ -6,9 +6,6 @@ contract MEICANRequestManager {
         string source;
         string destination;
         uint bandwidth;
-        bytes32[] policyIds;
-        string[] policyNames;
-        string[] policyDescriptions;
         uint startTime;
         uint endTime;
         bool recurring;
@@ -47,9 +44,6 @@ contract MEICANRequestManager {
         string memory source,
         string memory destination,
         uint bandwidth,
-        bytes32[] memory policyIds,
-        string[] memory policyNames,
-        string[] memory policyDescriptions,
         uint startTime,
         uint endTime,
         bool recurring,
@@ -58,7 +52,7 @@ contract MEICANRequestManager {
         bytes32 requestId = keccak256(abi.encodePacked(msg.sender, source, destination, block.timestamp));
         
         CircuitParams memory params = CircuitParams(
-            source, destination, bandwidth, policyIds, policyNames, policyDescriptions, startTime, endTime, recurring, path
+            source, destination, bandwidth, startTime, endTime, recurring, path
         );
 
         requests[requestId] = CircuitRequest(
@@ -103,7 +97,6 @@ contract MEICANRequestManager {
         requests[_id].params.destination,
         requests[_id].params.bandwidth,
         requests[_id].params.policyIds,
-        requests[_id].params.policyNames,
         requests[_id].params.policyDescriptions,
         requests[_id].params.startTime,
         requests[_id].params.endTime,

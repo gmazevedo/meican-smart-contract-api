@@ -6,14 +6,14 @@ use Web3\Providers\HttpProvider;
 use Dotenv\Dotenv;
 use Elliptic\EC;
 use kornrunner\RLP\RLP;
-use phpseclib\Math\BigInteger;
-use kornrunner\Ethereum\Transaction;
+//use phpseclib\Math\BigInteger;
+//use kornrunner\Ethereum\Transaction;
 use kornrunner\Keccak;
 
 header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/logs/api.log');
-error_log("API iniciou!");
+error_log("index.php!");
 
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
@@ -94,14 +94,6 @@ function sendTransaction($functionData) {
         }
 
         $nonceHex = '0x' . dechex((int) $nonce->toString());
-        
-        //Verificar formato de functionData
-        if (!is_string($functionData) || substr($functionData, 0, 2) !== '0x') {
-            error_log("Erro: functionData inválido. Deve ser uma string hexadecimal começando com 0x.");
-            echo json_encode(['error' => "functionData inválido. Deve ser uma string hexadecimal começando com 0x."]);
-            return;
-        }
-    
 
         //Estimando gás
         $params = [
@@ -125,7 +117,7 @@ function sendTransaction($functionData) {
             $gasHex = '0x' . dechex($gasLimit);
 
             // Gas Price fixado inicialmente
-            $gasPrice = 500000000; // 0.5 Gwei
+            $gasPrice = 2000000000;
             $gasPriceHex = '0x' . dechex($gasPrice);
 
             //Obtém o saldo antes de enviar a transação
@@ -143,11 +135,11 @@ function sendTransaction($functionData) {
                 error_log("Custo total do gás: " . $totalGasCost . " wei");
 
                 //Se o saldo for insuficiente, reduz o gasPrice
-                if ($saldoDisponivel < $totalGasCost) {
+                /*if ($saldoDisponivel < $totalGasCost) {
                     $gasPrice = (int) ($gasPrice * 0.5); // Reduz para metade
                     $gasPriceHex = '0x' . dechex($gasPrice);
                     error_log("Saldo insuficiente. Novo Gas Price ajustado: " . $gasPrice . " wei");
-                }
+                }*/
 
                 //Criando a transação com valores finais
                 $transaction = [
@@ -194,8 +186,11 @@ function sendTransaction($functionData) {
 $action = $_POST['action'] ?? $_GET['action'] ?? null;
 
 // Registrar um novo circuito
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit') {
-    $data = json_decode(file_get_contents("php://input"), true);
+//if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit') {
+function prepareData($input){
+    global $web3, $contractAddress, $privateKey, $adminAddress, $contract;
+
+    $data = json_decode($input, true);
 
     // Validação dos campos obrigatórios
     $requiredFields = ['source', 'destination', 'bandwidth', 'startTime', 'endTime', 'path'];
@@ -207,28 +202,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit
     }
 
     // Formatação dos dados
-    $policyIdsFormatted = isset($data['policyIds']) ? array_map(fn($id) => strtolower((string) $id), $data['policyIds']) : [];
-    $policyNamesFormatted = isset($data['policyNames']) ? array_map(function ($name) {
-        return utf8_encode((string) $name);
-    }, $data['policyNames']) : [];
-    $policyDescriptionsFormatted = isset($data['policyDescriptions']) ? array_map(function ($desc) {
-        return utf8_encode((string) $desc);
-    }, $data['policyDescriptions']) : [];
     $recurring = filter_var($data['recurring'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
     // Logs para depuração
-    /*error_log("Dados para getData: " . print_r([
+    error_log("Dados para getData: " . print_r([
         'source' => $data['source'],
         'destination' => $data['destination'],
         'bandwidth' => $data['bandwidth'],
-        'policyIds' => $policyIdsFormatted,
-        'policyNames' => $policyNamesFormatted,
-        'policyDescriptions' => $policyDescriptionsFormatted,
         'startTime' => $data['startTime'],
         'endTime' => $data['endTime'],
         'recurring' => $recurring,
         'path' => $data['path']
-    ], true));*/
+    ], true));
 
     try {
         $functionData = $contract->getData(
@@ -236,17 +221,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit
             $data['source'],
             $data['destination'],
             $data['bandwidth'],
-            $policyIdsFormatted,
-            $data['policyNames'],
-            $data['policyDescriptions'],
             (int) $data['startTime'],
             (int) $data['endTime'],
             (bool) $recurring,
             (string) $data['path']
         );
-
-        var_dump($functionData);
-        error_log("functionData recebido: " . print_r($functionData));
 
         if (!is_string($functionData) || substr($functionData, 0, 2) !== '0x') {
             $functionData = "0x" . $functionData;
