@@ -12,7 +12,7 @@
 ```jq '.abi' build/contracts/[nomeDoContrato].json > ABI/[nomeDoContrato]ABI.json```
 
 ### Iniciar servidor php
-```php -S localhost:8000```
+```php -S localhost:8000 router.php```
 
 ### Paginas criadas
 Solicitação de circuitos: http://localhost:8000/web/circuitRequest.html
