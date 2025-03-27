@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload e Registro de Política</title>
+</head>
+<body>
+    <h2>Upload de Arquivo, Encriptação e Registro na Blockchain</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <label>Escolha um arquivo:</label>
+        <input type="file" name="file" id="fileInput" required><br><br>
+        <button type="submit">Registrar</button>
+    </form>
+
+    <h3>Resultado:</h3>
+    <pre id="result"></pre>
+
+    <script>
+        document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            document.getElementById("result").textContent = "Enviando arquivo...";
+
+            try {
+                const response = await fetch("register.php", {
+                    method: "POST",
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById("result").textContent = `Hash registrada com sucesso!\nTx: ${data.transactionHash}`;
+                } else {
+                    document.getElementById("result").textContent = `Erro: ${data.error}`;
+                }
+            } catch (err) {
+                document.getElementById("result").textContent = "Erro na requisição: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
