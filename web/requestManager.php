@@ -19,7 +19,7 @@ $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 $rpcUrl = $_ENV['RPC_URL'];
-$contractAddress = $_ENV['CONTRACT_ADDRESS'];
+$contractAddress = $_ENV['REQUEST_MANAGER_CONTRACT_ADDRESS'];
 $privateKey = $_ENV['PRIVATE_KEY'];
 $adminAddress = $_ENV['ADMIN_ADDRESS'];
 
