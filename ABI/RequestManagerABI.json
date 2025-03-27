@@ -32,21 +32,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32[]",
-            "name": "policyIds",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyNames",
-            "type": "string[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyDescriptions",
-            "type": "string[]"
-          },
-          {
             "internalType": "uint256",
             "name": "startTime",
             "type": "uint256"
@@ -134,21 +119,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32[]",
-            "name": "policyIds",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyNames",
-            "type": "string[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyDescriptions",
-            "type": "string[]"
-          },
-          {
             "internalType": "uint256",
             "name": "startTime",
             "type": "uint256"
@@ -222,21 +192,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "bytes32[]",
-            "name": "policyIds",
-            "type": "bytes32[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyNames",
-            "type": "string[]"
-          },
-          {
-            "internalType": "string[]",
-            "name": "policyDescriptions",
-            "type": "string[]"
-          },
-          {
             "internalType": "uint256",
             "name": "startTime",
             "type": "uint256"
@@ -297,21 +252,6 @@
         "internalType": "uint256",
         "name": "bandwidth",
         "type": "uint256"
-      },
-      {
-        "internalType": "bytes32[]",
-        "name": "policyIds",
-        "type": "bytes32[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "policyNames",
-        "type": "string[]"
-      },
-      {
-        "internalType": "string[]",
-        "name": "policyDescriptions",
-        "type": "string[]"
       },
       {
         "internalType": "uint256",
@@ -409,21 +349,6 @@
                 "internalType": "uint256",
                 "name": "bandwidth",
                 "type": "uint256"
-              },
-              {
-                "internalType": "bytes32[]",
-                "name": "policyIds",
-                "type": "bytes32[]"
-              },
-              {
-                "internalType": "string[]",
-                "name": "policyNames",
-                "type": "string[]"
-              },
-              {
-                "internalType": "string[]",
-                "name": "policyDescriptions",
-                "type": "string[]"
               },
               {
                 "internalType": "uint256",
