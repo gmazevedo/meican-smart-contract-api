@@ -5,7 +5,7 @@ $filePath = __DIR__ . $requestUri;
 
 if ($requestUri === '/' || $requestUri === '') {
     // Redireciona para index.php por padrão
-    require_once __DIR__ . '/index.php';
+    require_once __DIR__ . '/circuitRequest.php';
 } elseif (file_exists($filePath) && !is_dir($filePath)) {
     // Se o arquivo requisitado existe (HTML, JS, PHP), carrega normalmente
     return false;
