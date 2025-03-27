@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
 use Web3\Web3;
 use Web3\Contract;
 use Web3\Providers\HttpProvider;
@@ -12,10 +12,10 @@ use kornrunner\Keccak;
 
 header('Content-Type: application/json');
 ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/logs/api.log');
-error_log("index.php!");
+ini_set('error_log', __DIR__ . '/../logs/api.log');
+error_log("requestManager iniciou!");
 
-$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
 $rpcUrl = $_ENV['RPC_URL'];
@@ -24,10 +24,46 @@ $privateKey = $_ENV['PRIVATE_KEY'];
 $adminAddress = $_ENV['ADMIN_ADDRESS'];
 
 $web3 = new Web3(new HttpProvider($rpcUrl));
-//$contractABI = file_get_contents('RequestManagerABI.json');
 $contractABI = file_get_contents(__DIR__ . '/../ABI/RequestManagerABI.json');
 $contract = new Contract($web3->provider, $contractABI);
 $contract->at($contractAddress);
+
+$inputJSON = file_get_contents("php://input");
+$input = json_decode($inputJSON, true);
+$action = $input['action'] ?? $_GET['action'] ?? null;
+
+//error_log("Método: " . $_SERVER['REQUEST_METHOD']);
+//error_log("Ação recebida: " . $action);
+
+// Registrar um novo circuito
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'requestCircuit') {
+    prepareData($input);
+}
+// Aprovar um circuito
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approveCircuit') {
+    $id = $_GET['id'];
+    $functionData = $contract->getData('approveCircuit', $id);
+    sendTransaction($functionData);
+}
+
+// Rejeitar um circuito
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'rejectCircuit') {
+    $id = $_GET['id'];
+    $functionData = $contract->getData('rejectCircuit', $id);
+    sendTransaction($functionData);
+}
+
+// Consultar um circuito
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'getCircuit') {
+    $id = $_GET['id'];
+    $contract->call('getCircuitRequest', $id, function ($err, $result) {
+        if ($err !== null) {
+            echo json_encode(['error' => $err->getMessage()]);
+        } else {
+            echo json_encode($result);
+        }
+    });
+}
 
 function signTransaction($transaction, $privateKey) {
     $ec = new EC('secp256k1');
@@ -184,14 +220,8 @@ function sendTransaction($functionData) {
     });
 }
 
-$action = $_POST['action'] ?? $_GET['action'] ?? null;
-
-// Registrar um novo circuito
-//if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'requestCircuit') {
-function prepareData($input){
+function prepareData($data){
     global $web3, $contractAddress, $privateKey, $adminAddress, $contract;
-
-    $data = json_decode($input, true);
 
     // Validação dos campos obrigatórios
     $requiredFields = ['source', 'destination', 'bandwidth', 'startTime', 'endTime', 'path'];
@@ -246,31 +276,5 @@ function prepareData($input){
         error_log("Erro ao chamar getData(): " . $e->getMessage());
         echo json_encode(['error' => "Erro ao chamar getData(): " . $e->getMessage()]);
     }
-}
-
-// Aprovar um circuito
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'approveCircuit') {
-    $id = $_GET['id'];
-    $functionData = $contract->getData('approveCircuit', $id);
-    sendTransaction($functionData);
-}
-
-// Rejeitar um circuito
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $_GET['action'] === 'rejectCircuit') {
-    $id = $_GET['id'];
-    $functionData = $contract->getData('rejectCircuit', $id);
-    sendTransaction($functionData);
-}
-
-// Consultar um circuito
-if ($_SERVER['REQUEST_METHOD'] === 'GET' && $_GET['action'] === 'getCircuit') {
-    $id = $_GET['id'];
-    $contract->call('getCircuitRequest', $id, function ($err, $result) {
-        if ($err !== null) {
-            echo json_encode(['error' => $err->getMessage()]);
-        } else {
-            echo json_encode($result);
-        }
-    });
 }
 ?>

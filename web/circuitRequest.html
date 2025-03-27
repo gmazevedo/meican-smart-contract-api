@@ -45,6 +45,7 @@
             event.preventDefault();
 
             let requestData = {
+                action: "requestCircuit",
                 source: $("#source").val(),
                 destination: $("#destination").val(),
                 bandwidth: parseInt($("#bandwidth").val()),
@@ -55,7 +56,7 @@
             };
 
             $.ajax({
-                url: "routes.php",
+                url: "requestManager.php",
                 type: "POST",
                 data: JSON.stringify(requestData),
                 contentType: "application/json",
