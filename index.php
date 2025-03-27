@@ -24,7 +24,8 @@ $privateKey = $_ENV['PRIVATE_KEY'];
 $adminAddress = $_ENV['ADMIN_ADDRESS'];
 
 $web3 = new Web3(new HttpProvider($rpcUrl));
-$contractABI = file_get_contents('contractABI.json');
+//$contractABI = file_get_contents('RequestManagerABI.json');
+$contractABI = file_get_contents(__DIR__ . '/../ABI/RequestManagerABI.json');
 $contract = new Contract($web3->provider, $contractABI);
 $contract->at($contractAddress);
 
