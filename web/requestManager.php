@@ -132,89 +132,51 @@ function sendTransaction($functionData) {
 
         $nonceHex = '0x' . dechex((int) $nonce->toString());
 
-        //Estimando gás
-        $params = [
-            'from' => strtolower($adminAddress),
-            'to' => strtolower($contractAddress),
-            'data' => $functionData
-        ];
+        // Em vez de usar eth_estimateGas, usamos um valor seguro vindo do Truffle + margem
+        $baseGas = 270_000; // base testado no Truffle
+        $gasLimit = (int) ($baseGas * 1.2); // adiciona 20% de margem
+        $gasHex = '0x' . dechex($gasLimit);
 
-        error_log("Estimando gás com os parâmetros: " . print_r($params, true));
+        $gasPrice = 3_000_000_000; // 3 Gwei
+        $gasPriceHex = '0x' . dechex($gasPrice);
 
-        $web3->eth->estimateGas($params, function ($err, $estimatedGas) use ($contractAddress, $privateKey, $adminAddress, $functionData, $nonceHex, $web3) {
+        $web3->eth->getBalance($adminAddress, function ($err, $balance) use ($gasLimit, $gasPrice, $gasPriceHex, $gasHex, $contractAddress, $functionData, $nonceHex, $privateKey, $web3) {
             if ($err !== null) {
-                error_log("Erro ao estimar gás: " . $err->getMessage());
-                echo json_encode(['error' => "Erro ao estimar gás: " . $err->getMessage()]);
+                error_log("Erro ao obter saldo: " . $err->getMessage());
+                echo json_encode(['error' => "Erro ao obter saldo: " . $err->getMessage()]);
                 return;
             }
 
-            //Adiciona 10% de margem ao gas limit
-            $estimatedGas = hexdec($estimatedGas->toString());
-            $gasLimit = (int) ($estimatedGas * 1.1);
-            $gasHex = '0x' . dechex($gasLimit);
+            $saldo = gmp_init($balance->toString(), 10);
+            $custo = gmp_mul($gasLimit, $gasPrice);
 
-            // Gas Price fixado inicialmente
-            $gasPrice = 2000000000;
-            $gasPriceHex = '0x' . dechex($gasPrice);
+            if (gmp_cmp($saldo, $custo) < 0) {
+                echo json_encode(['error' => 'Saldo insuficiente para cobrir o gas.']);
+                return;
+            }
 
-            //Obtém o saldo antes de enviar a transação
-            $web3->eth->getBalance($adminAddress, function ($err, $balance) use ($gasLimit, &$gasHex, &$gasPriceHex, $gasPrice, $contractAddress, $functionData, $nonceHex, $privateKey, $web3) {
+            $transaction = [
+                'nonce' => $nonceHex,
+                'to' => $contractAddress,
+                'gas' => (string) $gasLimit,
+                'gasPrice' => (string) $gasPrice,
+                'value' => '0',
+                'data' => $functionData,
+                'chainId' => 1337
+            ];
+
+            error_log("Final TX: " . print_r($transaction, true));
+
+            $signedTransaction = signTransaction($transaction, $privateKey);
+
+            $web3->eth->sendRawTransaction($signedTransaction, function ($err, $txHash) {
                 if ($err !== null) {
-                    error_log("Erro ao obter saldo: " . $err->getMessage());
-                    echo json_encode(['error' => "Erro ao obter saldo: " . $err->getMessage()]);
-                    return;
+                    error_log("Erro ao enviar transação: " . $err->getMessage());
+                    echo json_encode(['error' => "Erro ao enviar transação: " . $err->getMessage()]);
+                } else {
+                    error_log("Transação enviada com sucesso! Hash: " . $txHash);
+                    echo json_encode(['transactionHash' => $txHash]);
                 }
-
-                $saldoDisponivel = hexdec($balance->toString());
-                $totalGasCost = $gasLimit * $gasPrice;
-
-                error_log("Saldo disponível: " . $saldoDisponivel . " wei");
-                error_log("Custo total do gás: " . $totalGasCost . " wei");
-
-                //Se o saldo for insuficiente, reduz o gasPrice
-                /*if ($saldoDisponivel < $totalGasCost) {
-                    $gasPrice = (int) ($gasPrice * 0.5); // Reduz para metade
-                    $gasPriceHex = '0x' . dechex($gasPrice);
-                    error_log("Saldo insuficiente. Novo Gas Price ajustado: " . $gasPrice . " wei");
-                }*/
-
-                //Criando a transação com valores finais
-                $transaction = [
-                    'nonce' => $nonceHex,
-                    'to' => $contractAddress,
-                    'gas' => $gasHex, // Gas Limit atualizado
-                    'gasPrice' => $gasPriceHex, // Gas Price ajustado
-                    'value' => '0x0',
-                    'data' => $functionData,
-                    'chainId' => 1337
-                ];
-
-                error_log("Gas Price final: " . hexdec($transaction['gasPrice']) . " wei");
-                error_log("Gas Limit final: " . hexdec($transaction['gas']) . " unidades");
-                
-                
-                $gasLimit = hexdec($transaction['gas']);  // Convertendo gasLimit de hexadecimal para decimal
-                $gasPrice = hexdec($transaction['gasPrice']);  // Convertendo gasPrice de hexadecimal para decimal
-                $value = hexdec($transaction['value']);  // Valor transferido na transação
-                $totalCost = $gasLimit * $gasPrice + $value; // Calcula custo total em wei
-                
-                error_log("Cálculo do custo total: Gas Limit ($gasLimit) * Gas Price ($gasPrice) + Value ($value) = $totalCost wei");
-
-                //Assinando a transação
-                $signedTransaction = signTransaction($transaction, $privateKey);
-
-                error_log("Transação assinada: " . $signedTransaction);
-
-                //Enviando a transação assinada
-                $web3->eth->sendRawTransaction($signedTransaction, function ($err, $txHash) {
-                    if ($err !== null) {
-                        error_log("Erro ao enviar transação: " . $err->getMessage());
-                        echo json_encode(['error' => "Erro ao enviar transação: " . $err->getMessage()]);
-                    } else {
-                        error_log("Transação enviada com sucesso! Hash: " . $txHash);
-                        echo json_encode(['transactionHash' => $txHash]);
-                    }
-                });
             });
         });
     });
