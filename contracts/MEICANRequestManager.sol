@@ -24,9 +24,15 @@ contract MEICANRequestManager {
     mapping(bytes32 => CircuitRequest) public requests;
     
     event CircuitRequested(
-        bytes32 id, 
-        address requester, 
-        CircuitParams params,
+        bytes32 id,
+        address requester,
+        string source,
+        string destination,
+        uint bandwidth,
+        uint startTime,
+        uint endTime,
+        bool recurring,
+        string path,
         string status
     );
     
@@ -59,7 +65,17 @@ contract MEICANRequestManager {
             requestId, msg.sender, params, "pending", block.timestamp, false
         );
         
-        emit CircuitRequested(requestId, msg.sender, params, "pending");
+        emit CircuitRequested(
+                requestId,
+                msg.sender,
+                source,
+                destination,
+                bandwidth,
+                startTime,
+                endTime,
+                recurring,
+                path,
+                "pending");
 
         return requestId;
     }
