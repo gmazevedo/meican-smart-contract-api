@@ -1,6 +1,23 @@
 {
   "dependencies": {
+    "body-parser": "^2.2.0",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
     "web": "^0.0.2",
     "web3": "^4.16.0"
-  }
+  },
+  "name": "meican-smart-contract-api",
+  "version": "1.0.0",
+  "description": "```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```",
+  "main": "test_getData.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module"
 }
