@@ -19,6 +19,9 @@ contract MEICANRequestManager {
         string status;
         uint timestamp;
         bool approved;
+        bytes32 policyHash; 
+        string policyLink;
+        string encryptedAESKey;
     }
     
     mapping(bytes32 => CircuitRequest) public requests;
@@ -38,13 +41,17 @@ contract MEICANRequestManager {
     
     event CircuitApproved(
         bytes32 id, 
-        address requester, 
-        CircuitParams params,
-        string status,
-        uint timestamp
+        bytes32 policyHash,
+        string policyLink,
+        string encryptedAESKey
     );
     
-    event CircuitRejected(bytes32 id);
+    event CircuitRejected(
+        bytes32 id, 
+        bytes32 policyHash,
+        string policyLink,
+        string encryptedAESKey
+    );
     
     function requestCircuit(
         string memory source,
@@ -62,7 +69,7 @@ contract MEICANRequestManager {
         );
 
         requests[requestId] = CircuitRequest(
-            requestId, msg.sender, params, "pending", block.timestamp, false
+            requestId, msg.sender, params, "pending", block.timestamp, false, 0,'',''
         );
         
         emit CircuitRequested(
@@ -80,48 +87,44 @@ contract MEICANRequestManager {
         return requestId;
     }
     
-    function approveCircuit(bytes32 _id) public {
-        require(requests[_id].approved == false, "Circuit has already been approved");
-        
-        CircuitRequest storage req = requests[_id];
-        req.approved = true;
-        req.status = "approved";
-        
-        emit CircuitApproved(
-            req.id, 
-            req.requester, 
-            req.params,
-            req.status,
-            req.timestamp
+    function approveCircuit(
+        bytes32 id,
+        bytes32 policyHash,
+        string memory policyLink,
+        string memory encryptedAESKey
+    ) public {
+        require(requests[id].requester != address(0), "Requisicao inexistente.");
+        require(
+            keccak256(bytes(requests[id].status)) == keccak256(bytes("pending")),
+            "Requisicao ja foi processada."
         );
+
+        requests[id].status = "approved";
+        requests[id].policyHash = policyHash;
+        requests[id].policyLink = policyLink;
+
+        emit CircuitApproved(id, policyHash, policyLink, encryptedAESKey);
     }
     
-    function rejectCircuit(bytes32 _id) public {
-        require(requests[_id].approved == false, "Circuit has already been processed");
-        requests[_id].status = "rejected";
-        emit CircuitRejected(_id);
+    function rejectCircuit(        
+        bytes32 id,
+        bytes32 policyHash,
+        string memory policyLink,
+        string memory encryptedAESKey
+    ) public {
+        require(requests[id].requester != address(0), "Requisicao inexistente.");
+        require(
+            keccak256(bytes(requests[id].status)) == keccak256(bytes("pending")),
+            "Requisicao ja foi processada."
+        );
+        requests[id].status = "rejected";
+        requests[id].policyLink = policyLink;
+        requests[id].policyHash = policyHash;
+
+        emit CircuitRejected(id, policyHash, policyLink, encryptedAESKey);
     }
     
     function getCircuitRequest(bytes32 _id) public view returns (CircuitRequest memory) {
-        //bytes32, address, string memory, string memory, uint, bytes32[] memory, string[] memory, string[] memory, uint, uint, bool, string memory, string memory, uint, bool
-   // ) {
-        //CircuitRequest memory req = requests[_id];
-        /*return (
-        requests[_id].id,
-        requests[_id].requester,
-        requests[_id].params.source,
-        requests[_id].params.destination,
-        requests[_id].params.bandwidth,
-        requests[_id].params.policyIds,
-        requests[_id].params.policyDescriptions,
-        requests[_id].params.startTime,
-        requests[_id].params.endTime,
-        requests[_id].params.recurring,
-        requests[_id].params.path,
-        requests[_id].status,
-        requests[_id].timestamp,
-        requests[_id].approved
-        );*/
         return requests[_id];
     }
 
