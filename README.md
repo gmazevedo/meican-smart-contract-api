@@ -20,8 +20,11 @@
 ### Paginas criadas
 Solicitação de circuitos: http://localhost:8000/circuitRequest.html
 
-Upload de arquivo de uma política na blockchan: http://localhost:8000/policyUpload.html
-
 Visualizador de requisições (usuário): http://localhost:8000/userRequestViewer.html 
+
+Visualizador de requisições pendentes (operador): http://localhost:8000/pendingRequests.html
+
+Avaliação de requisições (aprova/rejeita) + upload de politicas: http://localhost:8000/requestEval.html
+
 
 
