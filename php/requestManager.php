@@ -9,11 +9,18 @@ use kornrunner\RLP\RLP;
 //use phpseclib\Math\BigInteger;
 //use kornrunner\Ethereum\Transaction;
 use kornrunner\Keccak;
+use EthereumPHP\Types\Address;
+use EthereumPHP\Types\Block;
+use EthereumPHP\Types\Transaction;
+use EthereumABI\ABI;
 
 header('Content-Type: application/json');
 ini_set('log_errors', 1);
 ini_set('error_log', __DIR__ . '/../logs/api.log');
 error_log("requestManager iniciou!");
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
@@ -28,12 +35,14 @@ $contractABI = file_get_contents(__DIR__ . '/../ABI/RequestManagerABI.json');
 $contract = new Contract($web3->provider, $contractABI);
 $contract->at($contractAddress);
 
-$inputJSON = file_get_contents("php://input");
-$input = json_decode($inputJSON, true);
-$action = $input['action'] ?? $_GET['action'] ?? null;
+//$inputJSON = file_get_contents("php://input");
+//$input = json_decode($inputJSON, true);
 
-//error_log("Método: " . $_SERVER['REQUEST_METHOD']);
-//error_log("Ação recebida: " . $action);
+$input = $_SERVER['REQUEST_METHOD'] === 'POST'
+    ? json_decode(file_get_contents("php://input"), true)
+    : $_GET;
+    
+$action = $input['action'] ?? $_GET['action'] ?? null;
 
 // Registrar um novo circuito
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'requestCircuit') {
@@ -55,14 +64,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'rejectCircuit') {
 
 // Consultar um circuito
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'getCircuit') {
-    $id = $_GET['id'];
-    $contract->call('getCircuitRequest', $id, function ($err, $result) {
+    $eventSignature = '0x' . Keccak::hash('CircuitRequested(bytes32,address,string,string,uint256,uint256,uint256,bool,string,string)', 256);
+    getCircuitRequestsByAddress($web3, $contractAddress, $eventSignature, $userAddress);
+    // Busca eventos CircuitRequested emitidos pelo contrato
+    /*$address = strtolower($input['address'] ?? '');
+    $contract->getPastEvents('CircuitRequested', [
+        'fromBlock' => '0x0',
+        'toBlock' => 'latest'
+        ], function ($err, $events) use ($address) {
         if ($err !== null) {
-            echo json_encode(['error' => $err->getMessage()]);
-        } else {
-            echo json_encode($result);
+            echo json_encode(['error' => 'Erro ao buscar eventos: ' . $err->getMessage()]);
+            return;
         }
-    });
+
+        $userRequests = [];
+        foreach ($events as $event) {
+            if (strtolower($event['returnValues']['requester']) === $address) {
+                $params = $event['returnValues']['params'];
+                $userRequests[] = [
+                    'id' => $event['returnValues']['id'],
+                    'source' => $params['source'],
+                    'destination' => $params['destination'],
+                    'bandwidth' => $params['bandwidth'],
+                    'startTime' => $params['startTime'],
+                    'endTime' => $params['endTime'],
+                    'status' => $event['returnValues']['status']
+                ];
+            }
+        }
+
+        echo json_encode($userRequests);
+
+    });*/
 }
 
 function signTransaction($transaction, $privateKey) {
@@ -238,5 +271,59 @@ function prepareData($data){
         error_log("Erro ao chamar getData(): " . $e->getMessage());
         echo json_encode(['error' => "Erro ao chamar getData(): " . $e->getMessage()]);
     }
+}
+
+function getCircuitRequestsByAddress($web3, $contractAddress, $eventSignature, $userAddress)
+{
+    $web3->eth->getLogs([
+        'fromBlock' => '0x0',
+        'toBlock' => 'latest',
+        'address' => $contractAddress,
+        'topics' => [ $eventSignature, null ] // podemos filtrar pelo tópico[1] depois
+    ], function ($err, $logs) use ($userAddress, $eventSignature) {
+        if ($err !== null) {
+            echo json_encode(['error' => 'Erro ao buscar logs: ' . $err->getMessage()]);
+            return;
+        }
+
+        $abi = new ABI();
+        $results = [];
+
+        foreach ($logs as $log) {
+            $requester = '0x' . substr($log['topics'][1], 26);
+            if (strtolower($requester) !== strtolower($userAddress)) continue;
+
+            // Ordem conforme declarada no evento
+            $types = [
+                'bytes32',   // id
+                'address',   // requester
+                'string',    // source
+                'string',    // destination
+                'uint256',   // bandwidth
+                'uint256',   // startTime
+                'uint256',   // endTime
+                'bool',      // recurring
+                'string',    // path
+                'string'     // status
+            ];
+
+            $decoded = $abi->decodeParameters($types, $log['data']);
+
+            $results[] = [
+                'id' => $decoded[0],
+                'requester' => $decoded[1],
+                'source' => $decoded[2],
+                'destination' => $decoded[3],
+                'bandwidth' => hexdec($decoded[4]),
+                'startTime' => hexdec($decoded[5]),
+                'endTime' => hexdec($decoded[6]),
+                'recurring' => (bool) $decoded[7],
+                'path' => $decoded[8],
+                'status' => $decoded[9],
+            ];
+        }
+
+        echo json_encode($results);
+    });
 }
 ?>
