@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Solicitações de Circuito</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>Minhas Solicitações de Circuito</h2>
+    <form id="queryForm">
+        <label>Seu endereço (wallet):</label>
+        <input type="text" id="userAddress" required>
+        <button type="submit">Buscar</button>
+    </form>
+
+    <div id="resultContainer">
+        <h3>Resultados:</h3>
+        <table id="resultsTable" style="display:none">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Origem</th>
+                    <th>Destino</th>
+                    <th>Largura</th>
+                    <th>Início</th>
+                    <th>Fim</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        document.getElementById("queryForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const address = document.getElementById("userAddress").value;
+
+            document.getElementById("status").textContent = "Buscando solicitações...";
+            document.getElementById("resultsTable").style.display = "none";
+            document.getElementById("resultsBody").innerHTML = "";
+
+            fetch("http://localhost:8000/getCircuit?address=" + encodeURIComponent(address))
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        document.getElementById("status").textContent = "Erro: " + data.error;
+                    } else {
+                        document.getElementById("status").textContent = data.length + " solicitações encontradas.";
+                        const tbody = document.getElementById("resultsBody");
+                        data.forEach(req => {
+                            const row = `<tr>
+                                <td>${req.id}</td>
+                                <td>${req.source}</td>
+                                <td>${req.destination}</td>
+                                <td>${req.bandwidth}</td>
+                                <td>${new Date(req.startTime * 1000).toLocaleString()}</td>
+                                <td>${new Date(req.endTime * 1000).toLocaleString()}</td>
+                                <td>${req.status}</td>
+                            </tr>`;
+                            tbody.insertAdjacentHTML("beforeend", row);
+                        });
+                        document.getElementById("resultsTable").style.display = "table";
+                    }
+                })
+                .catch(err => {
+                    document.getElementById("status").textContent = "Falha na requisição: " + err.message;
+                });
+        });
+    </script>
+</body>
+</html>

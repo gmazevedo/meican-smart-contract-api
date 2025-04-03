@@ -45,18 +45,17 @@
             event.preventDefault();
 
             let requestData = {
-                action: "requestCircuit",
                 source: $("#source").val(),
                 destination: $("#destination").val(),
                 bandwidth: parseInt($("#bandwidth").val()),
-                startTime: new Date($("#startTime").val()).getTime() / 1000,
-                endTime: new Date($("#endTime").val()).getTime() / 1000,
+                startTime: Math.floor(new Date($("#startTime").val()).getTime() / 1000),
+                endTime: Math.floor(new Date($("#endTime").val()).getTime() / 1000),
                 recurring: $("#recurring").val() === "true",
                 path: $("#path").val()
             };
 
             $.ajax({
-                url: "requestManager.php",
+                url: "http://localhost:8000/requestCircuit",
                 type: "POST",
                 data: JSON.stringify(requestData),
                 contentType: "application/json",

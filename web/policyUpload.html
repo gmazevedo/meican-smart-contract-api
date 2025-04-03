@@ -5,10 +5,15 @@
     <title>Upload e Registro de Política</title>
 </head>
 <body>
-    <h2>Upload de Arquivo, Encriptação e Registro na Blockchain</h2>
-    <form id="uploadForm" enctype="multipart/form-data">
+    <h2>Upload de Arquivo e Registro na Blockchain</h2>
+
+    <form id="uploadForm">
         <label>Escolha um arquivo:</label>
-        <input type="file" name="file" id="fileInput" required><br><br>
+        <input type="file" id="fileInput" required><br><br>
+
+        <label>Informe o link:</label>
+        <input type="url" id="linkInput" placeholder="https://exemplo.com/politica" required><br><br>
+
         <button type="submit">Registrar</button>
     </form>
 
@@ -19,28 +24,36 @@
         document.getElementById("uploadForm").addEventListener("submit", async function (e) {
             e.preventDefault();
             const fileInput = document.getElementById("fileInput");
+            const linkInput = document.getElementById("linkInput");
             const file = fileInput.files[0];
-            if (!file) return;
+            const link = linkInput.value.trim();
 
-            const formData = new FormData();
-            formData.append("file", file);
+            if (!file || !link) {
+                document.getElementById("result").textContent = "Arquivo e link são obrigatórios.";
+                return;
+            }
 
-            document.getElementById("result").textContent = "Enviando arquivo...";
+            const arrayBuffer = await file.arrayBuffer();
+            const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const fileHash = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
             try {
-                const response = await fetch("register.php", {
+                const response = await fetch("/registerFile", {
                     method: "POST",
-                    body: formData
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ fileHash, link })
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    document.getElementById("result").textContent = `Hash registrada com sucesso!\nTx: ${data.transactionHash}`;
+                    document.getElementById("result").textContent =
+                        `Política registrada com sucesso!\nHash: ${fileHash}\nLink: ${link}\nTx: ${data.transactionHash}`;
                 } else {
                     document.getElementById("result").textContent = `Erro: ${data.error}`;
                 }
             } catch (err) {
-                document.getElementById("result").textContent = "Erro na requisição: " + err.message;
+                document.getElementById("result").textContent = "Falha na requisição: " + err.message;
             }
         });
     </script>
