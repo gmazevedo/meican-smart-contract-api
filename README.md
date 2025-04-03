@@ -6,7 +6,7 @@
 ```truffle compile```
 
 ### Deploy do smart contract na blockchain
-```truffle migrate``` ou ```truffle migrate --reset```
+```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset```
 
 ### Atualizar ABI
 ```jq '.abi' build/contracts/[nomeDoContrato].json > ABI/[nomeDoContrato]ABI.json```
@@ -14,9 +14,14 @@
 ### Iniciar servidor php
 ```php -S localhost:8000 router.php```
 
-### Paginas criadas
-Solicitação de circuitos: http://localhost:8000/web/circuitRequest.html
+### Iniciar API requestManager
+```node requestManager.js```
 
-Upload de arquivo de uma política na blockchan: http://localhost:8000/web/policyUpload.html
+### Paginas criadas
+Solicitação de circuitos: http://localhost:8000/circuitRequest.html
+
+Upload de arquivo de uma política na blockchan: http://localhost:8000/policyUpload.html
+
+Visualizador de requisições (usuário): http://localhost:8000/userRequestViewer.html 
 
 
