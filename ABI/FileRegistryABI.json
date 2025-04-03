@@ -19,6 +19,12 @@
         "internalType": "uint256",
         "name": "timestamp",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "link",
+        "type": "string"
       }
     ],
     "name": "FileRegistered",
@@ -43,6 +49,11 @@
         "internalType": "uint256",
         "name": "timestamp",
         "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "link",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
@@ -55,32 +66,17 @@
         "internalType": "bytes32",
         "name": "fileHash",
         "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "link",
+        "type": "string"
       }
     ],
     "name": "registerFileHash",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes32",
-        "name": "fileHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "isFileRegistered",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function",
-    "constant": true
   },
   {
     "inputs": [
@@ -116,6 +112,26 @@
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "fileHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getFileLink",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
       }
     ],
     "stateMutability": "view",
