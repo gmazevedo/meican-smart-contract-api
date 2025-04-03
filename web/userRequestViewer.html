@@ -47,7 +47,7 @@
             document.getElementById("resultsTable").style.display = "none";
             document.getElementById("resultsBody").innerHTML = "";
 
-            fetch("http://localhost:8000/getCircuit?address=" + encodeURIComponent(address))
+            fetch("http://localhost:8000/getUserCircuit?address=" + encodeURIComponent(address))
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) {

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Avaliar Requisição</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-top: 10px; }
+        button { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>Avaliar Requisição</h2>
+
+    <form id="policyForm" data-action="approve">
+        <input type="hidden" id="requestId" value="">
+        
+        <label>Chave pública do usuário:</label>
+        <textarea id="userPublicKey" rows="10" cols="60" required placeholder="Cole aqui sua chave pública RSA no formato PEM"></textarea>
+
+        <label>Link da política (externo):</label>
+        <input type="url" id="policyLink" required>
+
+        <label>Arquivo da Política:</label>
+        <input type="file" id="policyFile" required>
+
+        <div style="margin-top: 15px;">
+            <button type="submit" data-action="approve">Aprovar</button>
+            <button type="submit" data-action="reject">Rejeitar</button>
+        </div>
+    </form>
+
+    <h3>Status:</h3>
+    <pre id="status"></pre>
+
+    <script>
+        // Pega o ID da requisição pela URL
+        const params = new URLSearchParams(window.location.search);
+        const requestId = params.get("id");
+        document.getElementById("requestId").value = requestId;
+
+        // Armazena qual botão foi clicado (Aprovar ou Rejeitar)
+        document.querySelectorAll("#policyForm button[type='submit']").forEach(button => {
+            button.addEventListener("click", () => {
+                document.getElementById("policyForm").dataset.action = button.dataset.action;
+            });
+        });
+
+        // Lógica principal do envio
+        document.getElementById("policyForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            const form = e.target;
+            const action = form.dataset.action;
+            const endpoint = action === "reject" ? "/rejectCircuit" : "/approveCircuit";
+
+            const file = document.getElementById("policyFile").files[0];
+            const link = document.getElementById("policyLink").value;
+            const publicKey = document.getElementById("userPublicKey").value;
+
+            if (!file || !link || !publicKey || !requestId) {
+                document.getElementById("status").textContent = "Todos os campos são obrigatórios.";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function () {
+                try {
+                    const base64Policy = btoa(reader.result);
+
+                    const response = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            requestId,
+                            fileContent: base64Policy,
+                            link,
+                            userPublicKey: publicKey
+                        })
+                    });
+
+                    const result = await response.json();
+                    document.getElementById("status").textContent = result.success
+                        ? `${action === "approve" ? "Aprovado" : "Rejeitado"} com sucesso!\nTx: ${result.transactionHash}`
+                        : `Erro: ${result.error}`;
+                } catch (err) {
+                    document.getElementById("status").textContent = "Erro na requisição: " + err.message;
+                }
+            };
+
+            reader.readAsBinaryString(file);
+        });
+    </script>
+</body>
+</html>
