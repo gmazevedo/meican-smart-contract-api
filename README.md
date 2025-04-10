@@ -9,7 +9,7 @@
 ```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset```
 
 ### Atualizar ABI
-```jq '.abi' build/contracts/[nomeDoContrato].json > ABI/[nomeDoContrato]ABI.json```
+```jq '.abi' build/contracts/MEICANRequestManager.json > ABI/MEICANRequestManagerABI.json```
 
 ### Iniciar servidor php
 ```php -S localhost:8000 router.php```
