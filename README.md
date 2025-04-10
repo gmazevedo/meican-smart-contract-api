@@ -3,7 +3,7 @@
 ```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```
 
 ### Compilar smart contract com Truffle
-```truffle compile```
+```truffle compile --config truffle-config.cjs```
 
 ### Deploy do smart contract na blockchain
 ```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset```
