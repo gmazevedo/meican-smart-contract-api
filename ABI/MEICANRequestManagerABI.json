@@ -19,12 +19,6 @@
         "internalType": "string",
         "name": "policyLink",
         "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "encryptedAESKey",
-        "type": "string"
       }
     ],
     "name": "CircuitApproved",
@@ -49,12 +43,6 @@
         "indexed": false,
         "internalType": "string",
         "name": "policyLink",
-        "type": "string"
-      },
-      {
-        "indexed": false,
-        "internalType": "string",
-        "name": "encryptedAESKey",
         "type": "string"
       }
     ],
@@ -120,13 +108,55 @@
       },
       {
         "indexed": false,
-        "internalType": "string",
+        "internalType": "int8",
         "name": "status",
-        "type": "string"
+        "type": "int8"
       }
     ],
     "name": "CircuitRequested",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "STATUS_APPROVED",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "STATUS_PENDING",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "STATUS_REJECTED",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -191,9 +221,9 @@
         "type": "tuple"
       },
       {
-        "internalType": "string",
+        "internalType": "int8",
         "name": "status",
-        "type": "string"
+        "type": "int8"
       },
       {
         "internalType": "uint256",
@@ -213,11 +243,6 @@
       {
         "internalType": "string",
         "name": "policyLink",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "encryptedAESKey",
         "type": "string"
       }
     ],
@@ -290,11 +315,6 @@
         "internalType": "string",
         "name": "policyLink",
         "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "encryptedAESKey",
-        "type": "string"
       }
     ],
     "name": "approveCircuit",
@@ -317,11 +337,6 @@
       {
         "internalType": "string",
         "name": "policyLink",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "encryptedAESKey",
         "type": "string"
       }
     ],
@@ -395,9 +410,9 @@
             "type": "tuple"
           },
           {
-            "internalType": "string",
+            "internalType": "int8",
             "name": "status",
-            "type": "string"
+            "type": "int8"
           },
           {
             "internalType": "uint256",
@@ -417,11 +432,6 @@
           {
             "internalType": "string",
             "name": "policyLink",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "encryptedAESKey",
             "type": "string"
           }
         ],

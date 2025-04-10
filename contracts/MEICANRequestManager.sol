@@ -2,6 +2,11 @@
 pragma solidity ^0.8.20;
 
 contract MEICANRequestManager {
+
+    int8 public constant STATUS_PENDING = 0;
+    int8 public constant STATUS_APPROVED = 1;
+    int8 public constant STATUS_REJECTED = -1;  
+
     struct CircuitParams {
         string source;
         string destination;
@@ -16,12 +21,11 @@ contract MEICANRequestManager {
         bytes32 id;
         address requester;
         CircuitParams params;
-        string status;
+        int8 status;
         uint timestamp;
         bool approved;
         bytes32 policyHash; 
         string policyLink;
-        string encryptedAESKey;
     }
     
     mapping(bytes32 => CircuitRequest) public requests;
@@ -36,21 +40,19 @@ contract MEICANRequestManager {
         uint endTime,
         bool recurring,
         string path,
-        string status
+        int8 status
     );
     
     event CircuitApproved(
         bytes32 id, 
         bytes32 policyHash,
-        string policyLink,
-        string encryptedAESKey
+        string policyLink
     );
     
     event CircuitRejected(
         bytes32 id, 
         bytes32 policyHash,
-        string policyLink,
-        string encryptedAESKey
+        string policyLink
     );
     
     function requestCircuit(
@@ -69,7 +71,7 @@ contract MEICANRequestManager {
         );
 
         requests[requestId] = CircuitRequest(
-            requestId, msg.sender, params, "pending", block.timestamp, false, 0,'',''
+            requestId, msg.sender, params, STATUS_PENDING, block.timestamp, false, 0,''
         );
         
         emit CircuitRequested(
@@ -82,7 +84,7 @@ contract MEICANRequestManager {
                 endTime,
                 recurring,
                 path,
-                "pending");
+                STATUS_PENDING);
 
         return requestId;
     }
@@ -90,38 +92,32 @@ contract MEICANRequestManager {
     function approveCircuit(
         bytes32 id,
         bytes32 policyHash,
-        string memory policyLink,
-        string memory encryptedAESKey
+        string memory policyLink
     ) public {
         require(requests[id].requester != address(0), "Requisicao inexistente.");
-        require(
-            keccak256(bytes(requests[id].status)) == keccak256(bytes("pending")),
-            "Requisicao ja foi processada."
-        );
+        require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
 
-        requests[id].status = "approved";
+
+        requests[id].status = STATUS_APPROVED;
         requests[id].policyHash = policyHash;
         requests[id].policyLink = policyLink;
 
-        emit CircuitApproved(id, policyHash, policyLink, encryptedAESKey);
+        emit CircuitApproved(id, policyHash, policyLink);
     }
     
     function rejectCircuit(        
         bytes32 id,
         bytes32 policyHash,
-        string memory policyLink,
-        string memory encryptedAESKey
+        string memory policyLink
     ) public {
         require(requests[id].requester != address(0), "Requisicao inexistente.");
-        require(
-            keccak256(bytes(requests[id].status)) == keccak256(bytes("pending")),
-            "Requisicao ja foi processada."
-        );
-        requests[id].status = "rejected";
+        require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
+
+        requests[id].status = STATUS_REJECTED;
         requests[id].policyLink = policyLink;
         requests[id].policyHash = policyHash;
 
-        emit CircuitRejected(id, policyHash, policyLink, encryptedAESKey);
+        emit CircuitRejected(id, policyHash, policyLink);
     }
     
     function getCircuitRequest(bytes32 _id) public view returns (CircuitRequest memory) {

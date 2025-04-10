@@ -7,6 +7,7 @@ import fs from 'fs';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import crypto from 'crypto';
+import fromAscii from 'web3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +38,7 @@ app.get('/getUserCircuit', async (req, res) => {
     }
 
     try {
-        const eventSignature = web3.utils.sha3('CircuitRequested(bytes32,address,string,string,uint256,uint256,uint256,bool,string,string)');
+        const eventSignature = web3.utils.sha3('CircuitRequested(bytes32,address,string,string,uint256,uint256,uint256,bool,string,int8)');
         const logs = await web3.eth.getPastLogs({
             fromBlock: '0x0',
             toBlock: 'latest',
@@ -58,7 +59,7 @@ app.get('/getUserCircuit', async (req, res) => {
                 { type: 'uint256', name: 'endTime' },
                 { type: 'bool', name: 'recurring' },
                 { type: 'string', name: 'path' },
-                { type: 'string', name: 'status' }
+                { type: 'int8', name: 'status' }
             ], log.data, log.topics.slice(1));
 
             if (decoded.requester.toLowerCase() === userAddress.toLowerCase()) {
@@ -72,7 +73,7 @@ app.get('/getUserCircuit', async (req, res) => {
                     endTime: parseInt(decoded.endTime),
                     recurring: decoded.recurring,
                     path: decoded.path,
-                    status: decoded.status
+                    status: Number(decoded.status)
                 });
             }
         }
@@ -87,7 +88,7 @@ app.get('/getUserCircuit', async (req, res) => {
 // Rota: obter requisições pendentes
 app.get('/getPendingCircuits', async (req, res) => {
     try {
-        const eventSignature = web3.utils.sha3('CircuitRequested(bytes32,address,string,string,uint256,uint256,uint256,bool,string,string)');
+        const eventSignature = web3.utils.sha3('CircuitRequested(bytes32,address,string,string,uint256,uint256,uint256,bool,string,int8)');
         const logs = await web3.eth.getPastLogs({
             fromBlock: '0x0',
             toBlock: 'latest',
@@ -108,10 +109,10 @@ app.get('/getPendingCircuits', async (req, res) => {
                 { type: 'uint256', name: 'endTime' },
                 { type: 'bool', name: 'recurring' },
                 { type: 'string', name: 'path' },
-                { type: 'string', name: 'status' }
+                { type: 'int8', name: 'status' }
             ], log.data, log.topics.slice(1));
 
-            if (decoded.status === 'pending') {
+            if (Number(decoded.status) === 0) {
                 results.push({
                     id: decoded.id,
                     requester: decoded.requester,
@@ -122,7 +123,7 @@ app.get('/getPendingCircuits', async (req, res) => {
                     endTime: parseInt(decoded.endTime),
                     recurring: decoded.recurring,
                     path: decoded.path,
-                    status: decoded.status
+                    status: Number(decoded.status)
                 });
             }
         }
@@ -201,9 +202,9 @@ async function processCircuitAction(req, res, methodName) {
         const { encrypted, key: aesKey, iv } = encryptWithAES(fileBuffer);
         const encryptedAESKey = encryptAESKeyWithRSA(Buffer.concat([aesKey, iv]), userPublicKey);
         const fileHash = web3.utils.sha3(encrypted.toString('hex'));
-        const payload = '0x' + encryptedAESKey.toString('hex');
+        const payload = '0x'; //+ encryptedAESKey.toString('hex')
 
-        const data = contract.methods[methodName](requestId, fileHash, link, payload).encodeABI();
+        const data = contract.methods[methodName](requestId, fileHash, link).encodeABI();
         const tx = {
             from: adminAddress,
             to: contract.options.address,
@@ -211,6 +212,10 @@ async function processCircuitAction(req, res, methodName) {
             gas: 300000,
             gasPrice: web3.utils.toWei('3', 'gwei')
         };
+
+        console.log("ID:", requestId);
+        console.log("Hash:", fileHash);
+        console.log("Link:", link);
 
         const signed = await web3.eth.accounts.signTransaction(tx, privateKey);
         const receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
