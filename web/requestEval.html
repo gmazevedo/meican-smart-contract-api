@@ -7,16 +7,20 @@
         body { font-family: Arial, sans-serif; margin: 20px; }
         label { display: block; margin-top: 10px; }
         button { margin-right: 10px; }
+        pre { background: #f8f8f8; padding: 10px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
     <h2>Avaliar Requisição</h2>
 
+    <div>
+        <strong>ID da Requisição:</strong> <span id="idText"></span><br>
+        <strong>Chave Pública:</strong>
+        <pre id="publicKeyBox">Carregando...</pre>
+    </div>
+
     <form id="policyForm" data-action="approve">
         <input type="hidden" id="requestId" value="">
-        
-        <label>Chave pública do usuário:</label>
-        <textarea id="userPublicKey" rows="10" cols="60" required placeholder="Cole aqui sua chave pública RSA no formato PEM"></textarea>
 
         <label>Link da política (externo):</label>
         <input type="url" id="policyLink" required>
@@ -34,19 +38,32 @@
     <pre id="status"></pre>
 
     <script>
-        // Pega o ID da requisição pela URL
         const params = new URLSearchParams(window.location.search);
         const requestId = params.get("id");
         document.getElementById("requestId").value = requestId;
+        document.getElementById("idText").textContent = requestId;
 
-        // Armazena qual botão foi clicado (Aprovar ou Rejeitar)
+        // Buscar chave pública da requisição
+        fetch(`/getRequestById?id=${requestId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.userPublicKey) {
+                    document.getElementById("publicKeyBox").textContent = data.userPublicKey;
+                } else {
+                    document.getElementById("publicKeyBox").textContent = "Chave não disponível.";
+                }
+            })
+            .catch(err => {
+                document.getElementById("publicKeyBox").textContent = "Erro ao buscar chave pública: " + err.message;
+            });
+
+        // Ação do botão
         document.querySelectorAll("#policyForm button[type='submit']").forEach(button => {
             button.addEventListener("click", () => {
                 document.getElementById("policyForm").dataset.action = button.dataset.action;
             });
         });
 
-        // Lógica principal do envio
         document.getElementById("policyForm").addEventListener("submit", async function (e) {
             e.preventDefault();
 
@@ -56,9 +73,8 @@
 
             const file = document.getElementById("policyFile").files[0];
             const link = document.getElementById("policyLink").value;
-            const publicKey = document.getElementById("userPublicKey").value;
 
-            if (!file || !link || !publicKey || !requestId) {
+            if (!file || !link || !requestId) {
                 document.getElementById("status").textContent = "Todos os campos são obrigatórios.";
                 return;
             }
@@ -74,8 +90,7 @@
                         body: JSON.stringify({
                             requestId,
                             fileContent: base64Policy,
-                            link,
-                            userPublicKey: publicKey
+                            link
                         })
                     });
 

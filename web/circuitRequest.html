@@ -34,6 +34,9 @@
         <label>Caminho:</label>
         <input type="text" id="path" required><br><br>
 
+        <label>Chave Pública do Usuário:</label>
+        <textarea id="publicKey" rows="6" cols="60" required></textarea><br><br>
+
         <button type="submit">Enviar</button>
     </form>
 
@@ -51,7 +54,8 @@
                 startTime: Math.floor(new Date($("#startTime").val()).getTime() / 1000),
                 endTime: Math.floor(new Date($("#endTime").val()).getTime() / 1000),
                 recurring: $("#recurring").val() === "true",
-                path: $("#path").val()
+                path: $("#path").val(),
+                userPublicKey: $("#publicKey").val()
             };
 
             $.ajax({

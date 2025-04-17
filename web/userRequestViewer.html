@@ -31,6 +31,8 @@
                     <th>Início</th>
                     <th>Fim</th>
                     <th>Status</th>
+                    <th>Hash politica</th>
+                    <th>Link politica</th>
                 </tr>
             </thead>
             <tbody id="resultsBody"></tbody>
@@ -61,6 +63,12 @@
                             else if (req.status === 0) statusText = "Pendente";
                             else if (req.status === 1) statusText = "Aprovado";
 
+                            let hashText =  "Indefinido";
+                            if (req.policyHash != 0) hashText = req.policyHash;
+
+                            let linkText =  "Indefinido";
+                            if (req.policyLink != '') linkText = req.policyLink;
+
 
                             const row = `<tr>
                                 <td>${req.id}</td>
@@ -70,6 +78,8 @@
                                 <td>${new Date(req.startTime * 1000).toLocaleString()}</td>
                                 <td>${new Date(req.endTime * 1000).toLocaleString()}</td>
                                 <td>${statusText}</td>
+                                <td>${hashText}</td>
+                                <td>${linkText}</td>
                             </tr>`;
                             tbody.insertAdjacentHTML("beforeend", row);
                         });

@@ -15,6 +15,7 @@ contract MEICANRequestManager {
         uint endTime;
         bool recurring;
         string path;
+        string userPublicKey;
     }
     
     struct CircuitRequest {
@@ -24,7 +25,7 @@ contract MEICANRequestManager {
         int8 status;
         uint timestamp;
         bool approved;
-        bytes32 policyHash; 
+        bytes32 policyHash;
         string policyLink;
     }
     
@@ -40,18 +41,19 @@ contract MEICANRequestManager {
         uint endTime,
         bool recurring,
         string path,
+        string userPublicKey,
         int8 status
     );
     
     event CircuitApproved(
-        bytes32 id, 
+        bytes32 id,
         bytes32 policyHash,
         string policyLink
     );
     
     event CircuitRejected(
         bytes32 id, 
-        bytes32 policyHash,
+        bytes32 policyHash, 
         string policyLink
     );
     
@@ -62,16 +64,17 @@ contract MEICANRequestManager {
         uint startTime,
         uint endTime,
         bool recurring,
-        string memory path
+        string memory path,
+        string memory userPublicKey
     ) public returns (bytes32) {
         bytes32 requestId = keccak256(abi.encodePacked(msg.sender, source, destination, block.timestamp));
         
         CircuitParams memory params = CircuitParams(
-            source, destination, bandwidth, startTime, endTime, recurring, path
+            source, destination, bandwidth, startTime, endTime, recurring, path, userPublicKey
         );
 
         requests[requestId] = CircuitRequest(
-            requestId, msg.sender, params, STATUS_PENDING, block.timestamp, false, 0,''
+            requestId, msg.sender, params, STATUS_PENDING, block.timestamp, false, 0, ''
         );
         
         emit CircuitRequested(
@@ -84,7 +87,9 @@ contract MEICANRequestManager {
                 endTime,
                 recurring,
                 path,
-                STATUS_PENDING);
+                userPublicKey,
+                STATUS_PENDING
+                );
 
         return requestId;
     }
