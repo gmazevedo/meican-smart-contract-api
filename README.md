@@ -3,13 +3,13 @@
 ```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```
 
 ### Compilar smart contract com Truffle
-```truffle compile```
+```truffle compile --config truffle-config.cjs```
 
 ### Deploy do smart contract na blockchain
-```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset```
+```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset --config truffle-config.cjs```
 
 ### Atualizar ABI
-```jq '.abi' build/contracts/[nomeDoContrato].json > ABI/[nomeDoContrato]ABI.json```
+```cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json```
 
 ### Iniciar servidor php
 ```php -S localhost:8000 router.php```
