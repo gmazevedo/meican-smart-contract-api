@@ -6,10 +6,10 @@
 ```truffle compile --config truffle-config.cjs```
 
 ### Deploy do smart contract na blockchain
-```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset```
+```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset --config truffle-config.cjs```
 
 ### Atualizar ABI
-```jq '.abi' build/contracts/MEICANRequestManager.json > ABI/MEICANRequestManagerABI.json```
+```cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json```
 
 ### Iniciar servidor php
 ```php -S localhost:8000 router.php```
