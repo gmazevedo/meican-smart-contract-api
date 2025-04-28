@@ -11,9 +11,6 @@
 ### Atualizar ABI
 ```cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json```
 
-### Iniciar servidor php
-```php -S localhost:8000 router.php```
-
 ### Iniciar API requestManager
 ```node requestManager.js```
 
@@ -26,5 +23,7 @@ Visualizador de requisições pendentes (operador): http://localhost:8000/pendin
 
 Avaliação de requisições (aprova/rejeita) + upload de politicas: http://localhost:8000/requestEval.html
 
+Envio de políticas para IPFS: http://localhost:8000/uploadPolicy.html
 
+Decriptografar arquivo de políticas com chave privada: http://localhost:8000/decrypt.html
 
