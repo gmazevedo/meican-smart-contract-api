@@ -1,15 +1,22 @@
-
 import { fileURLToPath } from 'url';
-import Web3 from 'web3';
 import path from 'path';
 import express from 'express';
-import fs from 'fs';
+//import fs from 'fs';
+import { createReadStream, unlinkSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import { ethers } from 'ethers';
+import multer from 'multer';
+import PinataSDK from '@pinata/sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const uploadDir = path.join(__dirname, 'uploads');
+if (!existsSync(uploadDir)) {
+  mkdirSync(uploadDir);
+}
+
+const upload = multer({ dest: uploadDir });
 
 dotenv.config();
 const app = express();
@@ -18,14 +25,15 @@ const port = 8000;
 app.use(bodyParser.json());
 app.use(express.static(path.resolve(__dirname, '../web')));
 
+const pinata = new PinataSDK(process.env.PINATA_API_KEY, process.env.PINATA_SECRET_API_KEY);
+
 const rpcUrl = process.env.RPC_URL;
 const contractAddress = process.env.REQUEST_MANAGER_CONTRACT_ADDRESS;
 const privateKey = process.env.PRIVATE_KEY;
 
-const web3 = new Web3(rpcUrl);
 const provider = new ethers.JsonRpcProvider(rpcUrl);
 const wallet = new ethers.Wallet(privateKey, provider);
-const artifact = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../ABI/MEICANRequestManagerABI.json')));
+const artifact = JSON.parse(readFileSync(path.resolve(__dirname, '../ABI/MEICANRequestManagerABI.json')));
 const abi = artifact.abi;
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
@@ -184,6 +192,26 @@ app.get('/getRequestById', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar requisição.' });
     }
 });
+
+// Rota: salvar arquivo de política criptografado no Pinata IPFS
+app.post('/uploadPolicy', upload.single('file'), async (req, res) => {
+    try {
+      const filePath = req.file.path;
+      const readableStream = createReadStream(filePath);
+  
+      const result = await pinata.pinFileToIPFS(readableStream, {
+        pinataMetadata: { name: req.file.originalname }
+      });
+  
+      unlinkSync(filePath); // Deleta o arquivo local após o upload
+  
+      res.json({ ipfsLink: `https://gateway.pinata.cloud/ipfs/${result.IpfsHash}` });
+    } catch (error) {
+      console.error('❌ Erro ao enviar arquivo para o Pinata:', error);
+      res.status(500).send('Erro ao enviar para o Pinata.');
+    }
+  });
+
 
 app.listen(port, () => {
     console.log(`requestManager.js rodando em http://localhost:${port}`);

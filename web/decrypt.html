@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Descriptografar ZIP (AES + RSA)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <h2>Descriptografar arquivo enviado via IPFS (ZIP: .enc + metadados.json)</h2>
+
+  <label>Arquivo ZIP recebido:</label><br>
+  <input type="file" id="zipInput" /><br><br>
+
+  <label>Arquivo da chave privada RSA (.pem):</label><br>
+  <input type="file" id="privateKeyFileInput" /><br><br>
+
+  <button onclick="decryptAndDownload()">Descriptografar e Baixar</button>
+
+  <p id="result"></p>
+
+  <script>
+    async function decryptAndDownload() {
+      const zipFile = document.getElementById('zipInput').files[0];
+      const privateKeyFile = document.getElementById('privateKeyFileInput').files[0];
+      const result = document.getElementById('result');
+
+      if (!zipFile || !privateKeyFile) {
+        result.innerText = '⚠️ Selecione o ZIP e a chave privada.';
+        return;
+      }
+
+      result.innerText = '⏳ Lendo ZIP...';
+
+      try {
+        const zipData = await zipFile.arrayBuffer();
+        const zip = await JSZip.loadAsync(zipData);
+
+        // Encontrar arquivos dentro do ZIP
+        const encFileName = Object.keys(zip.files).find(name => name.endsWith('.enc'));
+        const metadataFile = zip.files['metadados.json'];
+
+        if (!encFileName || !metadataFile) {
+          throw new Error('Arquivo .enc ou metadados.json não encontrado no ZIP.');
+        }
+
+        const encryptedFileBuffer = await zip.files[encFileName].async('arraybuffer');
+        const metadataText = await metadataFile.async('text');
+        const metadata = JSON.parse(metadataText);
+
+        // Ler chave privada
+        result.innerText = '⏳ Lendo chave privada...';
+        const privateKeyText = await privateKeyFile.text();
+        const cleanedKey = privateKeyText
+          .replace('-----BEGIN PRIVATE KEY-----', '')
+          .replace('-----END PRIVATE KEY-----', '')
+          .replace(/\s+/g, '');
+        const binaryDer = str2ab(atob(cleanedKey));
+
+        const privateKey = await window.crypto.subtle.importKey(
+          'pkcs8',
+          binaryDer,
+          { name: 'RSA-OAEP', hash: 'SHA-256' },
+          false,
+          ['decrypt']
+        );
+
+        // Descriptografar chave AES
+        const encryptedAesKeyBuffer = base64ToArrayBuffer(metadata.encryptedAesKey);
+        const aesKeyRaw = await window.crypto.subtle.decrypt(
+          { name: 'RSA-OAEP' },
+          privateKey,
+          encryptedAesKeyBuffer
+        );
+
+        const aesKey = await window.crypto.subtle.importKey(
+          'raw',
+          aesKeyRaw,
+          { name: 'AES-GCM' },
+          false,
+          ['decrypt']
+        );
+
+        // Descriptografar arquivo
+        const ivBuffer = base64ToArrayBuffer(metadata.iv);
+
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
+          { name: 'AES-GCM', iv: ivBuffer },
+          aesKey,
+          encryptedFileBuffer
+        );
+
+        // Fazer download do arquivo restaurado
+        const blob = new Blob([decryptedBuffer]);
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = encFileName.replace('.enc', ''); // Remove o .enc
+        link.click();
+
+        result.innerText = '✅ Arquivo descriptografado e baixado com sucesso!';
+      } catch (error) {
+        console.error(error);
+        result.innerText = '❌ Erro na descriptografia: ' + error.message;
+      }
+    }
+
+    function str2ab(str) {
+      const buf = new ArrayBuffer(str.length);
+      const bufView = new Uint8Array(buf);
+      for (let i = 0; i < str.length; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return buf;
+    }
+
+    function base64ToArrayBuffer(base64) {
+      base64 = base64.replace(/\s+/g, '');
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Upload criptografado para IPFS (Pinata)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+  <h2>Enviar arquivo criptografado (AES + RSA) para IPFS (Pinata)</h2>
+  
+  <label>Arquivo a ser criptografado:</label><br>
+  <input type="file" id="fileInput" /><br><br>
+
+  <label>Arquivo da chave pública (.pem):</label><br>
+  <input type="file" id="publicKeyFileInput" /><br><br>
+
+  <button onclick="encryptAndUpload()">Criptografar e Enviar</button>
+  <p id="result"></p>
+
+  <script>
+    async function encryptAndUpload() {
+      const fileInput = document.getElementById('fileInput').files[0];
+      const publicKeyFile = document.getElementById('publicKeyFileInput').files[0];
+      const result = document.getElementById('result');
+
+      if (!fileInput || !publicKeyFile) {
+        result.innerText = '⚠️ Selecione o arquivo e a chave pública.';
+        return;
+      }
+
+      result.innerText = '⏳ Lendo chave pública...';
+
+      // Ler o conteúdo da chave pública
+      const publicKeyText = await publicKeyFile.text();
+
+      const fileBuffer = await fileInput.arrayBuffer();
+
+      // Importar a chave pública RSA
+      const cleanedKey = publicKeyText
+        .replace('-----BEGIN PUBLIC KEY-----', '')
+        .replace('-----END PUBLIC KEY-----', '')
+        .replace(/\s+/g, '');
+
+      const binaryDer = str2ab(atob(cleanedKey));
+
+      const publicKey = await window.crypto.subtle.importKey(
+        'spki',
+        binaryDer,
+        { name: 'RSA-OAEP', hash: 'SHA-256' },
+        false,
+        ['encrypt']
+      );
+
+      // Gerar chave AES
+      const aesKey = await window.crypto.subtle.generateKey(
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt']
+      );
+
+      // Gerar IV
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+      // Criptografar o arquivo com AES
+      const encryptedFile = await window.crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        aesKey,
+        fileBuffer
+      );
+
+      // Exportar chave AES e criptografá-la com RSA
+      const rawAesKey = await window.crypto.subtle.exportKey('raw', aesKey);
+      const encryptedAesKey = await window.crypto.subtle.encrypt(
+        { name: 'RSA-OAEP' },
+        publicKey,
+        rawAesKey
+      );
+
+      // Converter IV e chave AES criptografada para Base64
+      const encryptedAesKeyBase64 = arrayBufferToBase64(encryptedAesKey);
+      const ivBase64 = arrayBufferToBase64(iv);
+
+      // Criar metadados.json
+      const metadata = {
+        encryptedAesKey: encryptedAesKeyBase64,
+        iv: ivBase64
+      };
+
+      // Gerar ZIP com JSZip
+      const zip = new JSZip();
+      zip.file(fileInput.name + '.enc', new Uint8Array(encryptedFile));
+      zip.file('metadados.json', JSON.stringify(metadata));
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Enviar o ZIP para o backend
+      const formData = new FormData();
+      formData.append('file', zipBlob, fileInput.name.replace(/\.[^/.]+$/, "") + '.zip');
+
+      result.innerText = '⏳ Enviando arquivo para o Pinata...';
+
+      try {
+        const response = await fetch('http://localhost:8000/uploadPolicy', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+        result.innerHTML = `✅ Link IPFS: <a href="${data.ipfsLink}" target="_blank">${data.ipfsLink}</a>`;
+      } catch (error) {
+        console.error(error);
+        result.innerText = '❌ Erro ao enviar para o Pinata.';
+      }
+    }
+
+    function str2ab(str) {
+      const buf = new ArrayBuffer(str.length);
+      const bufView = new Uint8Array(buf);
+      for (let i = 0; i < str.length; i++) {
+        bufView[i] = str.charCodeAt(i);
+      }
+      return buf;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+  </script>
+</body>
+</html>
