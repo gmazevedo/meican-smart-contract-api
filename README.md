@@ -2,6 +2,9 @@
 ### Iniciar blockchain com Ganache
 ```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```
 
+### Iniciar blockchain persistente
+```ganache --wallet.seed my-seed --db ./ganache-data --chain.chainId 1337```
+
 ### Compilar smart contract com Truffle
 ```truffle compile --config truffle-config.cjs```
 
