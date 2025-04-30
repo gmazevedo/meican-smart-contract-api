@@ -5,7 +5,35 @@ contract MEICANRequestManager {
 
     int8 public constant STATUS_PENDING = 0;
     int8 public constant STATUS_APPROVED = 1;
-    int8 public constant STATUS_REJECTED = -1;  
+    int8 public constant STATUS_REJECTED = -1; 
+    
+    address public owner;
+    mapping(address => bool) public isAdmin;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner.");
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(isAdmin[msg.sender], "Only admins.");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        isAdmin[msg.sender] = true;
+    }
+
+    function addAdmin(address newAdmin) external onlyOwner {
+        require(!isAdmin[newAdmin], "Is already admin.");
+        isAdmin[newAdmin] = true;
+    }
+
+    function removeAdmin(address admin) external onlyOwner {
+        require(isAdmin[admin], "Is not an admin.");
+        isAdmin[admin] = false;
+    }
 
     struct CircuitParams {
         string source;
@@ -98,7 +126,7 @@ contract MEICANRequestManager {
         bytes32 id,
         bytes32 policyHash,
         string memory policyLink
-    ) public {
+    ) public onlyAdmin {
         require(requests[id].requester != address(0), "Requisicao inexistente.");
         require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
 
@@ -114,7 +142,7 @@ contract MEICANRequestManager {
         bytes32 id,
         bytes32 policyHash,
         string memory policyLink
-    ) public {
+    ) public onlyAdmin {
         require(requests[id].requester != address(0), "Requisicao inexistente.");
         require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
 
