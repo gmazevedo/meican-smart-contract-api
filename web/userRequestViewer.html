@@ -67,7 +67,7 @@
                             if (req.policyHash != 0) hashText = req.policyHash;
 
                             let linkText =  "Indefinido";
-                            if (req.policyLink != '') linkText = req.policyLink;
+                            if (req.policyLink != '') linkText = `<a href="${req.policyLink}" target="_blank">${req.policyLink}</a>`;
 
 
                             const row = `<tr>
