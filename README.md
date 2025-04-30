@@ -2,6 +2,9 @@
 ### Iniciar blockchain com Ganache
 ```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```
 
+### Iniciar blockchain persistente
+```ganache --wallet.seed my-seed --db ./ganache-data --chain.chainId 1337```
+
 ### Compilar smart contract com Truffle
 ```truffle compile --config truffle-config.cjs```
 
@@ -10,9 +13,6 @@
 
 ### Atualizar ABI
 ```cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json```
-
-### Iniciar servidor php
-```php -S localhost:8000 router.php```
 
 ### Iniciar API requestManager
 ```node requestManager.js```
@@ -26,5 +26,7 @@ Visualizador de requisições pendentes (operador): http://localhost:8000/pendin
 
 Avaliação de requisições (aprova/rejeita) + upload de politicas: http://localhost:8000/requestEval.html
 
+Envio de políticas para IPFS: http://localhost:8000/uploadPolicy.html
 
+Decriptografar arquivo de políticas com chave privada: http://localhost:8000/decrypt.html
 
