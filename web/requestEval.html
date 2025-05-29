@@ -1,110 +1,174 @@
 <!DOCTYPE html>
 <html lang="pt">
 <head>
-    <meta charset="UTF-8">
-    <title>Avaliar Requisição</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        label { display: block; margin-top: 10px; }
-        button { margin-right: 10px; }
-        pre { background: #f8f8f8; padding: 10px; border: 1px solid #ccc; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Avaliar Requisição</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; }
+    button { margin-right: 10px; }
+    pre { background: #f8f8f8; padding: 10px; border: 1px solid #ccc; }
+  </style>
 </head>
 <body>
-    <h2>Avaliar Requisição</h2>
+  <h2>Avaliar Requisição</h2>
 
-    <div>
-        <strong>ID da Requisição:</strong> <span id="idText"></span><br>
-        <strong>Chave Pública:</strong>
-        <pre id="publicKeyBox">Carregando...</pre>
+  <div>
+    <strong>ID da Requisição:</strong> <span id="idText"></span><br>
+    <strong>Chave Pública:</strong>
+    <pre id="publicKeyBox">Carregando...</pre>
+  </div>
+
+  <form id="policyForm" data-action="approve">
+    <input type="hidden" id="requestId" value="">
+
+    <label>Arquivo da Política:</label>
+    <input type="file" id="policyFile" required>
+
+    <div style="margin-top: 15px;">
+      <button type="submit" data-action="approve">Aprovar</button>
+      <button type="submit" data-action="reject">Rejeitar</button>
     </div>
+  </form>
 
-    <form id="policyForm" data-action="approve">
-        <input type="hidden" id="requestId" value="">
+  <h3>Status:</h3>
+  <pre id="status"></pre>
+  <h3>Link IPFS:</h3>
+  <pre id="ipfsLinkBox"></pre>
 
-        <label>Link da política (externo):</label>
-        <input type="url" id="policyLink" required>
+  <script type="module">
+    import { JSEncrypt } from 'https://cdn.jsdelivr.net/npm/jsencrypt/+esm';
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.js";
 
-        <label>Arquivo da Política:</label>
-        <input type="file" id="policyFile" required>
+    const params = new URLSearchParams(window.location.search);
+    const requestId = params.get("id");
+    document.getElementById("requestId").value = requestId;
+    document.getElementById("idText").textContent = requestId;
 
-        <div style="margin-top: 15px;">
-            <button type="submit" data-action="approve">Aprovar</button>
-            <button type="submit" data-action="reject">Rejeitar</button>
-        </div>
-    </form>
+    let userPublicKey = "";
 
-    <h3>Status:</h3>
-    <pre id="status"></pre>
+    // Buscar chave pública do usuário
+    fetch(`/getRequestById?id=${requestId}`)
+      .then(res => res.json())
+      .then(data => {
+        userPublicKey = data.userPublicKey || "";
+        document.getElementById("publicKeyBox").textContent = userPublicKey || "Chave não disponível.";
+      })
+      .catch(err => {
+        document.getElementById("publicKeyBox").textContent = "Erro ao buscar chave pública: " + err.message;
+      });
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const requestId = params.get("id");
-        document.getElementById("requestId").value = requestId;
-        document.getElementById("idText").textContent = requestId;
+    function generateAESKey() {
+      return crypto.getRandomValues(new Uint8Array(32)); // AES-256
+    }
 
-        // Buscar chave pública da requisição
-        fetch(`/getRequestById?id=${requestId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.userPublicKey) {
-                    document.getElementById("publicKeyBox").textContent = data.userPublicKey;
-                } else {
-                    document.getElementById("publicKeyBox").textContent = "Chave não disponível.";
-                }
-            })
-            .catch(err => {
-                document.getElementById("publicKeyBox").textContent = "Erro ao buscar chave pública: " + err.message;
-            });
+    async function encryptWithAES(buffer, key, iv) {
+      const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "AES-CBC" }, false, ["encrypt"]);
+      return await crypto.subtle.encrypt({ name: "AES-CBC", iv }, cryptoKey, buffer);
+    }
 
-        // Ação do botão
-        document.querySelectorAll("#policyForm button[type='submit']").forEach(button => {
-            button.addEventListener("click", () => {
-                document.getElementById("policyForm").dataset.action = button.dataset.action;
-            });
+    async function encryptAESKeyWithRSA(aesKeyBase64, publicKey) {
+      const encryptor = new JSEncrypt();
+      encryptor.setPublicKey(publicKey);
+      return encryptor.encrypt(aesKeyBase64);
+    }
+
+    document.querySelectorAll("#policyForm button[type='submit']").forEach(button => {
+      button.addEventListener("click", () => {
+        document.getElementById("policyForm").dataset.action = button.dataset.action;
+      });
+    });
+
+    document.getElementById("policyForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const statusEl = document.getElementById("status");
+      const ipfsLinkEl = document.getElementById("ipfsLinkBox");
+
+
+      statusEl.textContent = "Processando, por favor aguarde...";
+      ipfsLinkEl.textContent = "Gerando e enviando para o IPFS...";
+
+      const action = e.target.dataset.action;
+      const endpoint = action === "reject" ? "/rejectCircuit" : "/approveCircuit";
+
+      const file = document.getElementById("policyFile").files[0];
+      if (!file || !requestId || !userPublicKey) {
+        statusEl.textContent = "Todos os campos são obrigatórios.";
+        ipfsLinkEl.textContent = "Não aplicável.";
+        return;
+      }
+
+      try {
+        const fileBuffer = await file.arrayBuffer();
+
+        const aesKey = generateAESKey();
+        const iv = crypto.getRandomValues(new Uint8Array(16));
+        const encryptedFile = await encryptWithAES(fileBuffer, aesKey, iv);
+
+        const aesKeyBase64 = btoa(String.fromCharCode(...aesKey));
+        const encryptedAESKey = await encryptAESKeyWithRSA(aesKeyBase64, userPublicKey);
+
+        if (!encryptedAESKey) {
+          statusEl.textContent = "Erro ao criptografar chave AES.";
+          ipfsLinkEl.textContent = "Falha na preparação.";
+          return;
+        }
+
+        const metadata = {
+          iv: btoa(String.fromCharCode(...iv)),
+          encryptedAESKey
+        };
+
+        const JSZip = (await import('https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm')).default;
+        const zip = new JSZip();
+        zip.file("encrypted_policy", new Uint8Array(encryptedFile));
+        zip.file("metadata.json", JSON.stringify(metadata, null, 2));
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+
+        const formData = new FormData();
+        formData.append("file", zipBlob, "encrypted_policy_package.zip");
+
+        const uploadRes = await fetch("/uploadPolicy", {
+          method: "POST",
+          body: formData
         });
 
-        document.getElementById("policyForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadData.ipfsLink) {
+          statusEl.textContent = "Erro ao enviar para o IPFS.";
+          ipfsLinkEl.textContent = "Falha no envio ao IPFS.";
+          return; 
+        }
 
-            const form = e.target;
-            const action = form.dataset.action;
-            const endpoint = action === "reject" ? "/rejectCircuit" : "/approveCircuit";
+        ipfsLinkEl.textContent = uploadData.ipfsLink;
 
-            const file = document.getElementById("policyFile").files[0];
-            const link = document.getElementById("policyLink").value;
+        const fileHash = ethers.utils.keccak256(new Uint8Array(fileBuffer));
 
-            if (!file || !link || !requestId) {
-                document.getElementById("status").textContent = "Todos os campos são obrigatórios.";
-                return;
-            }
+        statusEl.textContent = "Arquivo enviado ao IPFS. Finalizando requisição...";
 
-            const reader = new FileReader();
-            reader.onload = async function () {
-                try {
-                    const base64Policy = btoa(reader.result);
-
-                    const response = await fetch(endpoint, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            requestId,
-                            fileContent: base64Policy,
-                            link
-                        })
-                    });
-
-                    const result = await response.json();
-                    document.getElementById("status").textContent = result.success
-                        ? `${action === "approve" ? "Aprovado" : "Rejeitado"} com sucesso!\nTx: ${result.transactionHash}`
-                        : `Erro: ${result.error}`;
-                } catch (err) {
-                    document.getElementById("status").textContent = "Erro na requisição: " + err.message;
-                }
-            };
-
-            reader.readAsBinaryString(file);
+        const apiRes = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            requestId,
+            fileContent: btoa(String.fromCharCode(...new Uint8Array(fileBuffer))), // original
+            link: uploadData.ipfsLink
+          })
         });
-    </script>
+
+        const result = await apiRes.json();
+        statusEl.textContent = result.success
+          ? `✅ ${action === "approve" ? "Aprovado" : "Rejeitado"} com sucesso!`
+          : `❌ Erro: ${result.error}`;
+      } catch (err) {
+        statusEl.textContent = "Erro geral: " + err.message;
+        if (ipfsLinkEl.textContent === "Gerando e enviando para o IPFS...") {
+          ipfsLinkEl.textContent = "Não gerado devido a erro.";
+        }
+      }
+    });
+  </script>
 </body>
 </html>

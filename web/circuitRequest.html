@@ -34,8 +34,8 @@
         <label>Caminho:</label>
         <input type="text" id="path" required><br><br>
 
-        <label>Chave Pública do Usuário:</label>
-        <textarea id="publicKey" rows="6" cols="60" required></textarea><br><br>
+        <label>Arquivo da Chave Pública (.pem):</label>
+        <input type="file" id="publicKeyFile" accept=".pem" required><br><br>
 
         <button type="submit">Enviar</button>
     </form>
@@ -47,29 +47,58 @@
         $("#contractForm").submit(function(event) {
             event.preventDefault();
 
-            let requestData = {
-                source: $("#source").val(),
-                destination: $("#destination").val(),
-                bandwidth: parseInt($("#bandwidth").val()),
-                startTime: Math.floor(new Date($("#startTime").val()).getTime() / 1000),
-                endTime: Math.floor(new Date($("#endTime").val()).getTime() / 1000),
-                recurring: $("#recurring").val() === "true",
-                path: $("#path").val(),
-                userPublicKey: $("#publicKey").val()
+            const fileInput = document.getElementById("publicKeyFile");
+            const file = fileInput.files[0];
+
+            if (!file) {
+                $("#response").text("Por favor, selecione um arquivo .pem com a chave pública.");
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function () {
+                const content = reader.result.trim();
+
+                // Verifica se tem o cabeçalho e rodapé típicos de uma chave pública PEM
+                const isValidPEM = content.startsWith("-----BEGIN PUBLIC KEY-----") &&
+                                   content.endsWith("-----END PUBLIC KEY-----");
+
+                if (!isValidPEM) {
+                    $("#response").text("Arquivo inválido: não parece ser uma chave pública PEM.");
+                    return;
+                }
+
+                const requestData = {
+                    source: $("#source").val(),
+                    destination: $("#destination").val(),
+                    bandwidth: parseInt($("#bandwidth").val()),
+                    startTime: Math.floor(new Date($("#startTime").val()).getTime() / 1000),
+                    endTime: Math.floor(new Date($("#endTime").val()).getTime() / 1000),
+                    recurring: $("#recurring").val() === "true",
+                    path: $("#path").val(),
+                    userPublicKey: content
+                };
+
+                $.ajax({
+                    url: "http://localhost:8000/requestCircuit",
+                    type: "POST",
+                    data: JSON.stringify(requestData),
+                    contentType: "application/json",
+                    success: function (response) {
+                        $("#response").text(JSON.stringify(response, null, 2));
+                    },
+                    error: function (xhr) {
+                        $("#response").text("Erro ao enviar: " + xhr.responseText);
+                    }
+                });
             };
 
-            $.ajax({
-                url: "http://localhost:8000/requestCircuit",
-                type: "POST",
-                data: JSON.stringify(requestData),
-                contentType: "application/json",
-                success: function(response) {
-                    $("#response").text(JSON.stringify(response, null, 2));
-                },
-                error: function(xhr) {
-                    $("#response").text("Erro ao enviar: " + xhr.responseText);
-                }
-            });
+            reader.onerror = function () {
+                $("#response").text("Erro ao ler o arquivo da chave pública.");
+            };
+
+            reader.readAsText(file);
         });
     </script>
 
