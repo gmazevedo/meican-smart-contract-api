@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <title>Requisições Pendentes</title>
+    <title>Pending Requests</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
@@ -12,23 +12,23 @@
     </style>
 </head>
 <body>
-    <h2>Requisições Pendentes</h2>
+    <h2>Pending Requests</h2>
     <table id="requestTable" style="display: none;">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Origem</th>
-                <th>Destino</th>
-                <th>Largura</th>
-                <th>Início</th>
-                <th>Fim</th>
-                <th>Descrição</th>
-                <th>Requisição</th>
+                <th>Source</th>
+                <th>Destination</th>
+                <th>Bandwidth</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Description</th>
+                <th>Request</th>
             </tr>
         </thead>
         <tbody id="requestBody"></tbody>
     </table>
-    <p id="status">Carregando...</p>
+    <p id="status">Loading...</p>
 
     <script>
         fetch("/getPendingCircuits")
@@ -39,11 +39,11 @@
                 const status = document.getElementById("status");
     
                 if (data.length === 0) {
-                    status.textContent = "Nenhuma requisição pendente.";
+                    status.textContent = "No pending requests.";
                     return;
                 }
     
-                status.textContent = `🔎 ${data.length} requisição(ões) pendente(s) encontrada(s).`;
+                status.textContent = `🔎 ${data.length} pending request(s) found.`;
                 table.style.display = "table";
     
                 data.forEach(req => {
@@ -57,17 +57,17 @@
                         <td>${new Date(req.startTime * 1000).toLocaleString()}</td>
                         <td>${new Date(req.endTime * 1000).toLocaleString()}</td>
                         <td>${req.description || "-"}</td>
-                        <td><button onclick="avaliar('${req.id}')">Avaliar</button></td>
+                        <td><button onclick="evaluate('${req.id}')">Evaluate</button></td>
                     `;
     
                     tbody.appendChild(row);
                 });
             })
             .catch(err => {
-                document.getElementById("status").textContent = "Erro ao buscar requisições: " + err.message;
+                document.getElementById("status").textContent = "Error fetching requests: " + err.message;
             });
     
-        function avaliar(id) {
+        function evaluate(id) {
             window.location.href = `requestEval.html?id=${id}`;
         }
     </script>    

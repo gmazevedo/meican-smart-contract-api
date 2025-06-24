@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
   <meta charset="UTF-8">
-  <title>Avaliar Requisição</title>
+  <title>Evaluate Request</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     label { display: block; margin-top: 10px; }
@@ -11,29 +11,29 @@
   </style>
 </head>
 <body>
-  <h2>Avaliar Requisição</h2>
+  <h2>Evaluate Request</h2>
 
   <div>
-    <strong>ID da Requisição:</strong> <span id="idText"></span><br>
-    <strong>Chave Pública:</strong>
-    <pre id="publicKeyBox">Carregando...</pre>
+    <strong>Request ID:</strong> <span id="idText"></span><br>
+    <strong>Pubic Key:</strong>
+    <pre id="publicKeyBox">Loading...</pre>
   </div>
 
   <form id="policyForm" data-action="approve">
     <input type="hidden" id="requestId" value="">
 
-    <label>Arquivo da Política:</label>
+    <label>Policy File:</label>
     <input type="file" id="policyFile" required>
 
     <div style="margin-top: 15px;">
-      <button type="submit" data-action="approve">Aprovar</button>
-      <button type="submit" data-action="reject">Rejeitar</button>
+      <button type="submit" data-action="approve">Approve</button>
+      <button type="submit" data-action="reject">Reject</button>
     </div>
   </form>
 
   <h3>Status:</h3>
   <pre id="status"></pre>
-  <h3>Link IPFS:</h3>
+  <h3>IPFS Link:</h3>
   <pre id="ipfsLinkBox"></pre>
 
   <script type="module">
@@ -47,15 +47,15 @@
 
     let userPublicKey = "";
 
-    // Buscar chave pública do usuário
+    // Fetch user public key
     fetch(`/getRequestById?id=${requestId}`)
       .then(res => res.json())
       .then(data => {
         userPublicKey = data.userPublicKey || "";
-        document.getElementById("publicKeyBox").textContent = userPublicKey || "Chave não disponível.";
+        document.getElementById("publicKeyBox").textContent = userPublicKey || "Key not available.";
       })
       .catch(err => {
-        document.getElementById("publicKeyBox").textContent = "Erro ao buscar chave pública: " + err.message;
+        document.getElementById("publicKeyBox").textContent = "Error fetching public key: " + err.message;
       });
 
     function generateAESKey() {
@@ -86,16 +86,16 @@
       const ipfsLinkEl = document.getElementById("ipfsLinkBox");
 
 
-      statusEl.textContent = "Processando, por favor aguarde...";
-      ipfsLinkEl.textContent = "Gerando e enviando para o IPFS...";
+      statusEl.textContent = "Processing, please wait...";
+      ipfsLinkEl.textContent = "Generating and uploading to IPFS...";
 
       const action = e.target.dataset.action;
       const endpoint = action === "reject" ? "/rejectCircuit" : "/approveCircuit";
 
       const file = document.getElementById("policyFile").files[0];
       if (!file || !requestId || !userPublicKey) {
-        statusEl.textContent = "Todos os campos são obrigatórios.";
-        ipfsLinkEl.textContent = "Não aplicável.";
+        statusEl.textContent = "All fields are required.";
+        ipfsLinkEl.textContent = "Not applicable.";
         return;
       }
 
@@ -110,8 +110,8 @@
         const encryptedAESKey = await encryptAESKeyWithRSA(aesKeyBase64, userPublicKey);
 
         if (!encryptedAESKey) {
-          statusEl.textContent = "Erro ao criptografar chave AES.";
-          ipfsLinkEl.textContent = "Falha na preparação.";
+          statusEl.textContent = "Error encrypting AES key.";
+          ipfsLinkEl.textContent = "Preparation failure.";
           return;
         }
 
@@ -137,8 +137,8 @@
         const uploadData = await uploadRes.json();
         
         if (!uploadData.ipfsLink) {
-          statusEl.textContent = "Erro ao enviar para o IPFS.";
-          ipfsLinkEl.textContent = "Falha no envio ao IPFS.";
+          statusEl.textContent = "Error uploading to IPFS.";
+          ipfsLinkEl.textContent = "Failed to upload to IPFS.";
           return; 
         }
 
@@ -146,26 +146,26 @@
 
         const fileHash = ethers.utils.keccak256(new Uint8Array(fileBuffer));
 
-        statusEl.textContent = "Arquivo enviado ao IPFS. Finalizando requisição...";
+        statusEl.textContent = "File sent to IPFS. Finalizing request...";
 
         const apiRes = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             requestId,
-            fileContent: btoa(String.fromCharCode(...new Uint8Array(fileBuffer))), // original
+            fileContent: btoa(String.fromCharCode(...new Uint8Array(fileBuffer))),
             link: uploadData.ipfsLink
           })
         });
 
         const result = await apiRes.json();
         statusEl.textContent = result.success
-          ? `✅ ${action === "approve" ? "Aprovado" : "Rejeitado"} com sucesso!`
+          ? `✅ ${action === "approve" ? "Approved" : "Rejected"} with success!`
           : `❌ Erro: ${result.error}`;
       } catch (err) {
-        statusEl.textContent = "Erro geral: " + err.message;
-        if (ipfsLinkEl.textContent === "Gerando e enviando para o IPFS...") {
-          ipfsLinkEl.textContent = "Não gerado devido a erro.";
+        statusEl.textContent = "General error: " + err.message;
+        if (ipfsLinkEl.textContent === "Generating and uploading to IPFS...") {
+          ipfsLinkEl.textContent = "Not generated due to error.";
         }
       }
     });

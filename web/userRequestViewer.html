@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minhas Solicitações de Circuito</title>
+    <title>My Circuit Requests</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         table { border-collapse: collapse; width: 100%; margin-top: 20px; }
@@ -12,27 +12,28 @@
     </style>
 </head>
 <body>
-    <h2>Minhas Solicitações de Circuito</h2>
+    <h2>My Circuit Requests</h2>
     <form id="queryForm">
-        <label>Seu endereço (wallet):</label>
+        <label>Your address (wallet):</label>
         <input type="text" id="userAddress" required>
-        <button type="submit">Buscar</button>
+        <button type="submit">Search</button>
     </form>
 
     <div id="resultContainer">
-        <h3>Resultados:</h3>
+        <h3>Results:</h3>
         <table id="resultsTable" style="display:none">
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Origem</th>
-                    <th>Destino</th>
-                    <th>Largura</th>
-                    <th>Início</th>
-                    <th>Fim</th>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Bandwidth</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Description</th>
                     <th>Status</th>
-                    <th>Hash politica</th>
-                    <th>Link politica</th>
+                    <th>Policy hash</th>
+                    <th>Policy link</th>
                 </tr>
             </thead>
             <tbody id="resultsBody"></tbody>
@@ -45,7 +46,7 @@
             e.preventDefault();
             const address = document.getElementById("userAddress").value;
 
-            document.getElementById("status").textContent = "Buscando solicitações...";
+            document.getElementById("status").textContent = "Searching for requests...";
             document.getElementById("resultsTable").style.display = "none";
             document.getElementById("resultsBody").innerHTML = "";
 
@@ -53,20 +54,20 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) {
-                        document.getElementById("status").textContent = "Erro: " + data.error;
+                        document.getElementById("status").textContent = "Error: " + data.error;
                     } else {
-                        document.getElementById("status").textContent = data.length + " solicitações encontradas.";
+                        document.getElementById("status").textContent = data.length + " requests found.";
                         const tbody = document.getElementById("resultsBody");
                         data.forEach(req => {
-                            let statusText = "Desconhecido";
-                            if (req.status === -1) statusText = "Rejeitado";
-                            else if (req.status === 0) statusText = "Pendente";
-                            else if (req.status === 1) statusText = "Aprovado";
+                            let statusText = "Unknown";
+                            if (req.status === -1) statusText = "Rejected";
+                            else if (req.status === 0) statusText = "Pending";
+                            else if (req.status === 1) statusText = "Approved";
 
-                            let hashText =  "Indefinido";
+                            let hashText =  "Undefined";
                             if (req.policyHash != 0) hashText = req.policyHash;
 
-                            let linkText =  "Indefinido";
+                            let linkText =  "Undefined";
                             if (req.policyLink != '') linkText = `<a href="${req.policyLink}" target="_blank">${req.policyLink}</a>`;
 
 
@@ -77,6 +78,7 @@
                                 <td>${req.bandwidth}</td>
                                 <td>${new Date(req.startTime * 1000).toLocaleString()}</td>
                                 <td>${new Date(req.endTime * 1000).toLocaleString()}</td>
+                                <td>${req.description}</td>
                                 <td>${statusText}</td>
                                 <td>${hashText}</td>
                                 <td>${linkText}</td>
@@ -87,7 +89,7 @@
                     }
                 })
                 .catch(err => {
-                    document.getElementById("status").textContent = "Falha na requisição: " + err.message;
+                    document.getElementById("status").textContent = "Request failed: " + err.message;
                 });
         });
     </script>

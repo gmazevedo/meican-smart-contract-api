@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Descriptografar ZIP (AES + RSA)</title>
+  <title>Decrypt ZIP (AES + RSA)</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-  <h2>Descriptografar arquivo enviado via IPFS (ZIP: .enc + metadados.json)</h2>
+  <h2>Decrypt file uploaded via IPFS (ZIP: .enc + metadata.json)</h2>
 
-  <label>Arquivo ZIP recebido:</label><br>
+  <label>Received ZIP file:</label><br>
   <input type="file" id="zipInput" /><br><br>
 
-  <label>Arquivo da chave privada RSA (.pem):</label><br>
+  <label>RSA Private Key File (.pem):</label><br>
   <input type="file" id="privateKeyFileInput" /><br><br>
 
-  <button onclick="decryptAndDownload()">Descriptografar e Baixar</button>
+  <button onclick="decryptAndDownload()">Decrypt and Download</button>
 
   <p id="result"></p>
 
@@ -25,30 +25,28 @@
       const result = document.getElementById('result');
 
       if (!zipFile || !privateKeyFile) {
-        result.innerText = '⚠️ Selecione o ZIP e a chave privada.';
+        result.innerText = '⚠️ Select the ZIP and private key.';
         return;
       }
 
-      result.innerText = '⏳ Lendo ZIP...';
+      result.innerText = '⏳ Reading ZIP...';
 
       try {
         const zipData = await zipFile.arrayBuffer();
         const zip = await JSZip.loadAsync(zipData);
 
-        // Encontrar arquivos dentro do ZIP
         const encFileName = Object.keys(zip.files).find(name => name.endsWith('.enc'));
-        const metadataFile = zip.files['metadados.json'];
+        const metadataFile = zip.files['metadata.json'];
 
         if (!encFileName || !metadataFile) {
-          throw new Error('Arquivo .enc ou metadados.json não encontrado no ZIP.');
+          throw new Error('.enc or metadata.json file not found in ZIP.');
         }
 
         const encryptedFileBuffer = await zip.files[encFileName].async('arraybuffer');
         const metadataText = await metadataFile.async('text');
         const metadata = JSON.parse(metadataText);
 
-        // Ler chave privada
-        result.innerText = '⏳ Lendo chave privada...';
+        result.innerText = '⏳ Reading private key...';
         const privateKeyText = await privateKeyFile.text();
         const cleanedKey = privateKeyText
           .replace('-----BEGIN PRIVATE KEY-----', '')
@@ -64,7 +62,6 @@
           ['decrypt']
         );
 
-        // Descriptografar chave AES
         const encryptedAesKeyBuffer = base64ToArrayBuffer(metadata.encryptedAesKey);
         const aesKeyRaw = await window.crypto.subtle.decrypt(
           { name: 'RSA-OAEP' },
@@ -80,7 +77,6 @@
           ['decrypt']
         );
 
-        // Descriptografar arquivo
         const ivBuffer = base64ToArrayBuffer(metadata.iv);
 
         const decryptedBuffer = await window.crypto.subtle.decrypt(
@@ -89,17 +85,16 @@
           encryptedFileBuffer
         );
 
-        // Fazer download do arquivo restaurado
         const blob = new Blob([decryptedBuffer]);
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = encFileName.replace('.enc', ''); // Remove o .enc
+        link.download = encFileName.replace('.enc', ''); 
         link.click();
 
-        result.innerText = '✅ Arquivo descriptografado e baixado com sucesso!';
+        result.innerText = '✅ File decrypted and downloaded successfully!';
       } catch (error) {
         console.error(error);
-        result.innerText = '❌ Erro na descriptografia: ' + error.message;
+        result.innerText = '❌ Decryption error: ' + error.message;
       }
     }
 
