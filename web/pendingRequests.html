@@ -22,6 +22,7 @@
                 <th>Largura</th>
                 <th>Início</th>
                 <th>Fim</th>
+                <th>Descrição</th>
                 <th>Requisição</th>
             </tr>
         </thead>
@@ -55,6 +56,7 @@
                         <td>${req.bandwidth}</td>
                         <td>${new Date(req.startTime * 1000).toLocaleString()}</td>
                         <td>${new Date(req.endTime * 1000).toLocaleString()}</td>
+                        <td>${req.description || "-"}</td>
                         <td><button onclick="avaliar('${req.id}')">Avaliar</button></td>
                     `;
     
