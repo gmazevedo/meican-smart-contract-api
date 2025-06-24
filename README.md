@@ -1,35 +1,37 @@
-# Instruções
-### Iniciar blockchain com Ganache
+# Instructions
+### Launch blockchain - Lots of ether for debug purpose
 ```ganache-cli --gasLimit 10000000000 --defaultBalanceEther 1000000000 --networkId 1337```
 
-### Iniciar blockchain persistente
+### Start persistent blockchain
 ```ganache --wallet.seed my-seed --db ./ganache-data --chain.chainId 1337```
 
-### Iniciar blockchain similiar a Ethereum Mainnet
+### Start blockchain similar to Ethereum Mainnet
 ```ganache --chain.chainId 1 --chain.networkId 1 --miner.blockGasLimit 30000000 --miner.defaultGasPrice 430000000```
 
-### Compilar smart contract com Truffle
+### Compile smart contract with Truffle
 ```truffle compile --config truffle-config.cjs```
 
-### Deploy do smart contract na blockchain
+### Deployment of the smart contract on the blockchain
 ```truffle migrate --config truffle-config.cjs``` ou ```truffle migrate --reset --config truffle-config.cjs```
 
-### Atualizar ABI
+### ABI update
 ```cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json```
 
-### Iniciar API requestManager
+### Start API requestManager
 ```node requestManager.js```
 
-### Paginas criadas
-Solicitação de circuitos: http://localhost:8000/circuitRequest.html
+### Pages created
+Circuit request: http://localhost:8000/circuitRequest.html
 
-Visualizador de requisições (usuário): http://localhost:8000/userRequestViewer.html 
+Request Viewer (user): http://localhost:8000/userRequestViewer.html 
 
-Visualizador de requisições pendentes (operador): http://localhost:8000/pendingRequests.html
+Pending Request Viewer (operator): http://localhost:8000/pendingRequests.html
 
-Avaliação de requisições (aprova/rejeita) + upload de politicas: http://localhost:8000/requestEval.html
+Request evaluation (approve/reject) + policy upload: http://localhost:8000/requestEval.html
 
-Envio de políticas para IPFS: http://localhost:8000/uploadPolicy.html
+### Utils
 
-Decriptografar arquivo de políticas com chave privada: http://localhost:8000/decrypt.html
+Send Policies to IPFS: http://localhost:8000/uploadPolicy.html
+
+Decrypt policy file with private key: http://localhost:8000/decrypt.html
 
