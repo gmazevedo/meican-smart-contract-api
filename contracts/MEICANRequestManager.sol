@@ -41,8 +41,7 @@ contract MEICANRequestManager {
         uint bandwidth;
         uint startTime;
         uint endTime;
-        bool recurring;
-        string path;
+        string description;
         string userPublicKey;
     }
     
@@ -67,8 +66,7 @@ contract MEICANRequestManager {
         uint bandwidth,
         uint startTime,
         uint endTime,
-        bool recurring,
-        string path,
+        string description,
         string userPublicKey,
         int8 status
     );
@@ -91,14 +89,13 @@ contract MEICANRequestManager {
         uint bandwidth,
         uint startTime,
         uint endTime,
-        bool recurring,
-        string memory path,
+        string memory description,
         string memory userPublicKey
     ) public returns (bytes32) {
         bytes32 requestId = keccak256(abi.encodePacked(msg.sender, source, destination, block.timestamp));
         
         CircuitParams memory params = CircuitParams(
-            source, destination, bandwidth, startTime, endTime, recurring, path, userPublicKey
+            source, destination, bandwidth, startTime, endTime, description, userPublicKey
         );
 
         requests[requestId] = CircuitRequest(
@@ -113,8 +110,7 @@ contract MEICANRequestManager {
                 bandwidth,
                 startTime,
                 endTime,
-                recurring,
-                path,
+                description,
                 userPublicKey,
                 STATUS_PENDING
                 );
@@ -127,8 +123,8 @@ contract MEICANRequestManager {
         bytes32 policyHash,
         string memory policyLink
     ) public onlyAdmin {
-        require(requests[id].requester != address(0), "Requisicao inexistente.");
-        require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
+        require(requests[id].requester != address(0), "This request does not exist.");
+        require(requests[id].status == STATUS_PENDING, "Request has already been processed.");
 
 
         requests[id].status = STATUS_APPROVED;
@@ -143,8 +139,8 @@ contract MEICANRequestManager {
         bytes32 policyHash,
         string memory policyLink
     ) public onlyAdmin {
-        require(requests[id].requester != address(0), "Requisicao inexistente.");
-        require(requests[id].status == STATUS_PENDING, "Requisicao ja foi processada.");
+        require(requests[id].requester != address(0), "This request does not exist.");
+        require(requests[id].status == STATUS_PENDING, "Request has already been processed.");
 
         requests[id].status = STATUS_REJECTED;
         requests[id].policyLink = policyLink;
