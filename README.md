@@ -6,7 +6,7 @@
 ```ganache --wallet.seed my-seed --db ./ganache-data --chain.chainId 1337```
 
 ### Iniciar blockchain similiar a Ethereum Mainnet
-```ganache --chain.chainId 1 --chain.networkId 1 --miner.blockGasLimit 30000000 --gasPrice 2000000000```
+```ganache --chain.chainId 1 --chain.networkId 1 --miner.blockGasLimit 30000000 --miner.defaultGasPrice 430000000```
 
 ### Compilar smart contract com Truffle
 ```truffle compile --config truffle-config.cjs```
