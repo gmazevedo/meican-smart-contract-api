@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import { ethers } from 'ethers';
 import multer from 'multer';
 import PinataSDK from '@pinata/sdk';
+import { deserialize } from 'v8';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,13 +40,13 @@ const contract = new ethers.Contract(contractAddress, abi, wallet);
 
 // Solicitar circuito
 app.post('/requestCircuit', async (req, res) => {
-    const { source, destination, bandwidth, startTime, endTime, recurring, path, userPublicKey } = req.body;
-    if (!source || !destination || !bandwidth || !startTime || !endTime || !path || !userPublicKey) {
+    const { source, destination, bandwidth, startTime, endTime, description, userPublicKey } = req.body;
+    if (!source || !destination || !bandwidth || !startTime || !endTime || !userPublicKey) {
         return res.status(400).json({ error: 'Campos obrigatórios ausentes.' });
     }
 
     try {
-        const tx = await contract.requestCircuit(source, destination, bandwidth, startTime, endTime, recurring, path, userPublicKey);
+        const tx = await contract.requestCircuit(source, destination, bandwidth, startTime, endTime, description, userPublicKey);
         await tx.wait();
         res.json({ success: true, transactionHash: tx.hash });
     } catch (err) {
@@ -109,8 +110,7 @@ app.get('/getUserCircuit', async (req, res) => {
                         bandwidth: Number(request.params.bandwidth),
                         startTime: Number(request.params.startTime),
                         endTime: Number(request.params.endTime),
-                        recurring: request.params.recurring,
-                        path: request.params.path,
+                        description: request.params.description,
                         status: Number(request.status),
                         policyHash: request.policyHash,
                         policyLink: request.policyLink
@@ -150,8 +150,7 @@ app.get('/getPendingCircuits', async (req, res) => {
                     bandwidth: Number(request.params.bandwidth),
                     startTime: Number(request.params.startTime),
                     endTime: Number(request.params.endTime),
-                    recurring: request.params.recurring,
-                    path: request.params.path,
+                    description: request.params.description,
                     status: Number(request.status)
                 });
             }
@@ -182,8 +181,7 @@ app.get('/getRequestById', async (req, res) => {
             bandwidth: Number(request.params.bandwidth),
             startTime: Number(request.params.startTime),
             endTime: Number(request.params.endTime),
-            recurring: request.params.recurring,
-            path: request.params.path,
+            description: request.params.description,
             status: Number(request.status),
             userPublicKey: request.params.userPublicKey
         });
