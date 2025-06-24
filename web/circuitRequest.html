@@ -25,14 +25,8 @@
         <label>Fim:</label>
         <input type="datetime-local" id="endTime" required><br><br>
 
-        <label>Recorrente:</label>
-        <select id="recurring">
-            <option value="false">Não</option>
-            <option value="true">Sim</option>
-        </select><br><br>
-
-        <label>Caminho:</label>
-        <input type="text" id="path" required><br><br>
+        <label>Descrição:</label>
+        <input type="text" id="description" required><br><br>
 
         <label>Arquivo da Chave Pública (.pem):</label>
         <input type="file" id="publicKeyFile" accept=".pem" required><br><br>
@@ -60,7 +54,6 @@
             reader.onload = function () {
                 const content = reader.result.trim();
 
-                // Verifica se tem o cabeçalho e rodapé típicos de uma chave pública PEM
                 const isValidPEM = content.startsWith("-----BEGIN PUBLIC KEY-----") &&
                                    content.endsWith("-----END PUBLIC KEY-----");
 
@@ -75,8 +68,7 @@
                     bandwidth: parseInt($("#bandwidth").val()),
                     startTime: Math.floor(new Date($("#startTime").val()).getTime() / 1000),
                     endTime: Math.floor(new Date($("#endTime").val()).getTime() / 1000),
-                    recurring: $("#recurring").val() === "true",
-                    path: $("#path").val(),
+                    description: $("#description").val(),
                     userPublicKey: content
                 };
 
