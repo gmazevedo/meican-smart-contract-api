@@ -1,4 +1,6 @@
 # MEICAN Request Manager   
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 Official repository of the undergraduate thesis of **Gessica F. Mendonça Azevedo.**
 
 API for decentralized **circuit request management** that extends the MEICAN (Management Environment of Inter-domain Circuits for Advanced Networks) project with:
@@ -121,4 +123,6 @@ API for decentralized **circuit request management** that extends the MEICAN (Ma
 
 
 ## License
+Distributed under the [MIT License](LICENSE). 
+
 © 2025 Gessica Franciéle Mendonça Azevedo
