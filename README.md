@@ -1,4 +1,4 @@
-# MEICAN Request Manager   
+# Blockchain-based Circuit Allocation System
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 Official repository of the undergraduate thesis of **Gessica F. Mendonça Azevedo.**
