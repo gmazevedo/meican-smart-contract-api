@@ -1,88 +1,92 @@
 # MEICAN Request Manager   
-Repositório oficial do Trabalho de Conclusão de Curso de **Gessica F. Mendonça Azevedo**.  
-Gerenciador descentralizado de **requisições de circuitos** que estende o projeto MEICAN (Management Environment of Inter-domain Circuits for Advanced Networks) com:
-* **Smart Contract `MEICANRequestManager.sol`** (Solidity 0.8.20) – grava solicitações, decisões e links IPFS.
-* **Backend Node/Express (`backend/requestManager.js`)** – integra-se ao contrato (ethers.js 6.13), faz upload de arquivos no **IPFS via Pinata** e expõe rotas REST/WebSockets.
-* **Front-end HTML + JS** – lista requisições, realiza **criptografia híbrida (AES-CBC 256 + RSA 2048)** no navegador e aciona o backend/contrato.
-* **Scripts de teste** para medir gás e tempo de execução.
+Official repository of the undergraduate thesis of **Gessica F. Mendonça Azevedo.**
+
+API for decentralized **circuit request management** that extends the MEICAN (Management Environment of Inter-domain Circuits for Advanced Networks) project with:
+* **Smart Contract `MEICANRequestManager.sol`** (Solidity 0.8.20) – records IPFS requests, decisions, and links.
+* **Node/Express Backend (backend/requestManager.js)** – integrates with the contract (ethers.js 6.13), uploads files to IPFS via Pinata, and exposes REST/WebSockets routes.
+* **HTML + JS Frontend** – lists requests, performs hybrid encryption (AES-CBC 256 + RSA 2048) in the browser, and triggers the backend/contract.
+* **Test scripts** to measure gas and execution time.
 
 ---
 
-## Visão geral
-| Objetivo | Descrição |
+## Overview
+| Objective | Description |
 |----------|-----------|
-| **Auditabilidade** | Registrar aprovações/rejeições de circuitos (e respectivos arquivos de política) de forma **imutável**. |
-| **Transparência** | Permitir que qualquer parte interessada valide a integridade do processo consultando eventos na blockchain. |
-| **Proteção de dados** | Arquivos de política nunca transitam em texto puro: são cifrados localmente, enviados ao Pinata e apenas seus hashes e links ficam públicos. |
+| **Auditability** | Record approvals/rejections of circuits (and respective policy files) in an **immutable** way. |
+| **Transparency** | Allow any interested party to validate the integrity of the process by querying events on the blockchain. |
+| **Data protection** | Policy files never travel in plain text: they are encrypted locally, uploaded to Pinata, and only their hashes and links are made public. |
 
 ---
 
-## Estrutura do repositório
+## Repository structure
 
 
     meican-smart-contract-api-main/
-      ├── ABI/ # ABIs geradas pós-compile
-      ├── backend/ # API Express + integração Pinata/Ethereum
-      │ └── .env # arquivo de variáveis de ambiente
+      ├── ABI/ # Post-compile generated ABIs
+      ├── backend/ # API Express + Pinata/Ethereum integration
+      │ └── .env # Environment variables file
       ├── contracts/ # Smart contracts Solidity
       ├── migrations/ # Scripts Truffle
-      ├── php/ # LEGACY (não requerido, mantido para referência)
-      ├── scripts/ # Deploy, utilidades e testes de desempenho
-      ├── test/ # Scripts de teste
-      ├── web/ # Front-end estático
-      └── README.md # este arquivo
+      ├── php/ # LEGACY (not required, kept for reference)
+      ├── scripts/ # Deployment, utilities and performance testing
+      ├── test/ # Test scripts
+      ├── web/ # Static front-end
+      └── README.md # This file
 
 ---
 
-## Requisitos 
+## Requirements 
 
-| Ferramenta | Versão mínima | Observação |
+| Tool | Minimum version | Observation |
 |------------|---------------|------------|
 | **Node.js** | 20 LTS | |
 | **npm** | 10 | |
 | **Truffle** | 5.11 | `npm i -g truffle` |
-| **Ganache CLI** | 7.x | blockchain local |
-| **Solidity** | 0.8.20 | compilador via Truffle |
+| **Ganache CLI** | 7.x | local blockchain |
+| **Solidity** | 0.8.20 | compiler via Truffle |
 | **Git** | — | |
-| **Pinata** | conta grátis OK | gerar API Keys |
+| **Pinata** | Free account | generate API Keys |
 
 ---
 
-## Principais dependências
-- ethers.js 6.13.7 – interação Ethereum
+## Main dependencies
+- ethers.js 6.13.7 – Ethereum interaction
 - @pinata/sdk 2.1 – upload & pinning IPFS
-- jszip 3.10 – empacotamento ZIP
-- node-forge / Web Crypto API – RSA/AES no browser
-- Truffle 5 / Ganache – desenvolvimento local
+- jszip 3.10 – ZIP packaging
+- node-forge / Web Crypto API – RSA/AES in the browser
+- Truffle 5 / Ganache – local development
     
-## Configuração
+## Settings
 
-1. **Clone o repositório**
+1. **Clone the repository**
    ```bash
-   git clone https://github.com/<seu-usuario>/meican-requestmanager.git
-   cd meican-requestmanager
+   git clone https://github.com/gmazevedo/meican-smart-contract-api.git
+   cd meican-smart-contract-api
    
-2. **Instale as dependências**
+2. **Install the dependencies**
    ```bash
     npm install
 
-3.  **Crie o arquivo de variáveis de ambiente**
+3.  **Create the environment variables file**
    
-    Caminho: ```backend/.env```
+    Path: ```backend/.env```
 
      ```bash
-      PRIVATE_KEY=          # Chave da conta que fará o deploy
-      RPC_URL=http://127.0.0.1:8545  # Ganache/Hardhat ou endpoint Infura/Alchemy
-      PINATA_API_KEY=
-      PINATA_SECRET_API_KEY=
+      RPC_URL=http://127.0.0.1:8545  # Ganache endpoint
+      REQUEST_MANAGER_CONTRACT_ADDRESS= # Contract address
+      ADMIN_ADDRESS=         # Deploy account
+      PRIVATE_KEY=          # Deploy account private key
+      PORT=8000
+      PINATA_API_KEY=       # Pinata API key
+      PINATA_SECRET_API_KEY=  # Pinata API key secret
       ```
 
-4. Inicializar blockchain local (Ethereum Mainnet Similar)
+4. Initialize local blockchain (Ethereum Mainnet Similar)
      ```bash
       ganache --chain.chainId 1 --chain.networkId 1 --miner.blockGasLimit 30000000 --miner.defaultGasPrice 430000000
      ```
 
-5.  **Compile e migre os contratos**
+5.  **Compile and migrate contracts**
      ```bash
       truffle compile --config truffle-config.cjs
       truffle migrate --reset --network development --config truffle-config.cjs
@@ -93,27 +97,27 @@ Gerenciador descentralizado de **requisições de circuitos** que estende o proj
       cp build/contracts/MEICANRequestManager.json ABI/MEICANRequestManagerABI.json
      ```
      
-7.  **Inicie o backend**
+7.  **Start the backend**
      ```bash
       cd backend
       node requestManager.js
       ```
 ---
 
-## Endpoints & páginas principais
+## Endpoints & main pages
 
-| Página                                         | Rota                      | Função                                           |
+| Page                                         | Route                      | Function                                           |
 | ---------------------------------------------- | ------------------------- | ------------------------------------------------ | 
-| `http://localhost:8000/circuitRequest.html`    | `/circuitRequest.html`    | Usuário abre uma nova solicitação                |
-| `http://localhost:8000/userRequestViewer.html` | `/userRequestViewer.html` | Usuário acompanha suas requisições               |
-| `http://localhost:8000/pendingRequests.html`   | `/pendingRequests.html`   | Operador lista requisições pendentes             |
-| `http://localhost:8000/requestEval.html`       | `/requestEval.html`       | Operador aprova/rejeita + faz upload da política |
+| `http://localhost:8000/circuitRequest.html`    | `/circuitRequest.html`    | User opens a new request                |
+| `http://localhost:8000/userRequestViewer.html` | `/userRequestViewer.html` | User tracks their requests               |
+| `http://localhost:8000/pendingRequests.html`   | `/pendingRequests.html`   | Operator lists pending requests             |
+| `http://localhost:8000/requestEval.html`       | `/requestEval.html`       | Operator approves/rejects + uploads policy |
 
-### Util Pages
-| Página                                    |  Rota                     | Função                                           |
+### Util pages
+| Page                                    |  Route                     | Function                                           |
 | ----------------------------------------- | ------------------------- | ------------------------------------------------ |
-| `http://localhost:8000/uploadPolicy.html` | `/uploadPolicy.html`      | Ferramenta avulsa de upload IPFS                 |
-| `http://localhost:8000/decrypt.html`      | `/decrypt.html`           | Descriptografia local via chave privada          |
+| `http://localhost:8000/uploadPolicy.html` | `/uploadPolicy.html`      | Standalone IPFS upload tool                 |
+| `http://localhost:8000/decrypt.html`      | `/decrypt.html`           | Local decryption via private key          |
 
 
 ## License
