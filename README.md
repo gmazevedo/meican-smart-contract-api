@@ -81,7 +81,7 @@ API for decentralized **circuit request management** that extends the MEICAN (Ma
       PINATA_SECRET_API_KEY=  # Pinata API key secret
       ```
 
-4. Initialize local blockchain (Ethereum Mainnet Similar)
+4. **Initialize local blockchain (Ethereum Mainnet Similar)**
      ```bash
       ganache --chain.chainId 1 --chain.networkId 1 --miner.blockGasLimit 30000000 --miner.defaultGasPrice 430000000
      ```
